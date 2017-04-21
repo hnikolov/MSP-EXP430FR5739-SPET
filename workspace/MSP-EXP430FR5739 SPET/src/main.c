@@ -107,7 +107,7 @@ __interrupt void Port_4(void)
 
     switch(__even_in_range(P4IV,P4IV_P4IFG1))
     {
-        case P4IV_P4IFG0:
+        case P4IV_P4IFG0: // S1 pressed
             DisableSwitches();
             Switch2Pressed =  0;
             UserInput      =  1;
@@ -118,35 +118,47 @@ __interrupt void Port_4(void)
 
             if( SwitchCounter > 4 )
             {
-                SwitchCounter = 0;
-                Switch1Pressed++;
+                SwitchCounter  = 0;
+                Switch1Pressed = 1;
             }
             StartDebounceTimer(0);              // Re-enable switches after de-bounce
+
+            if( active == 1 )
+            {
+                mode = NOT_VALID;
+                __bic_SR_register_on_exit(LPM4_bits); // To exit an active mode
+            }
             break;
           
-        case P4IV_P4IFG1:
+        case P4IV_P4IFG1: // S2 pressed
             DisableSwitches();
             StartDebounceTimer(0);              // Re-enable switches after de-bounce
             P4IFG &= ~BIT1;                     // Clear P4.1 IFG
 
             // This is the second time Switch2 is pressed
             // Was the code executing inside of the modes?
-            if ((Switch2Pressed > 0) && (active == 1)) { break; }
-            else                                       { Switch2Pressed = 1; } // Enter a mode
+            if( active == 1 )
+            {
+                mode = NOT_VALID;
+                __bic_SR_register_on_exit(LPM4_bits); // To exit an active mode
+                break;
+            }
+            else //{ Switch2Pressed = 1; } // Enter a mode
+            {
+                UserInput = 0;
+                // If the counter value is 0 it indicates either Mode 4 or invalid entry
+                if(( SwitchCounter == 0 ) && ( Switch1Pressed == 0 ))        { mode = NOT_VALID; }     // no switch1 press - invalid
+                if(  SwitchCounter > LAST_MODE )                             { mode = NOT_VALID; }     // too high! this is invalid entry
 
-            UserInput = 0;
-            // If the counter value is 0 it indicates either Mode 4 or invalid entry
-            if(( SwitchCounter == 0 ) && ( Switch1Pressed == 0 ))        { mode = NOT_VALID; }     // no switch1 press - invalid
-            if(  SwitchCounter > LAST_MODE )                             { mode = NOT_VALID; }     // too high! this is invalid entry
+                if(( SwitchCounter == 0 ) && ( Switch1Pressed > 0  ))        { mode = LAST_MODE;     }  // because counter rolls over after 4
+                if(( SwitchCounter  > 0 ) && ( SwitchCounter <= LAST_MODE )) { mode = SwitchCounter; }  // store mode  (this entry is correct)
 
-            if(( SwitchCounter == 0 ) && ( Switch1Pressed > 0  ))        { mode = LAST_MODE;     }  // because counter rolls over after 4
-            if(( SwitchCounter  > 0 ) && ( SwitchCounter <= LAST_MODE )) { mode = SwitchCounter; }  // store mode  (this entry is correct)
-
-            // Reset variables
-            Switch1Pressed = 0;
-            SwitchCounter  = 0;
-            __bic_SR_register_on_exit(LPM4_bits); // Exit LPM4
-            break;
+                // Reset variables
+                Switch1Pressed = 0;
+                SwitchCounter  = 0;
+                __bic_SR_register_on_exit(LPM4_bits); // Exit LPM4
+                break;
+            }
   
         default:
             break;

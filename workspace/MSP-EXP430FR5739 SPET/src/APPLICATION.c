@@ -42,7 +42,6 @@ void Mode2(void)
 {
     // Variable initialisation
     active = 1;
-
     char str_Mode[] = "Mode 2: GPU echo: <STX> <PLD> <ETX> <BCC>\n";
     UART_TX_Data(str_Mode, strlen(str_Mode));
 
@@ -51,7 +50,8 @@ void Mode2(void)
 
     UCA0IE |= UCRXIE; // Enable UART RX Interrupt
 
-    while( UserInput == 0 )
+//    while( UserInput == 0 )
+    while( mode == MODE_2 )
     {
         if( GPU_RX_OK == 1 )
         {
@@ -66,6 +66,9 @@ void Mode2(void)
     } // end of while() loop
 
     UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
+
+    LED_Off( LED2 );
+    active = 0;
 }
 
 void Mode3(void)
@@ -78,9 +81,15 @@ void Mode3(void)
     LEDsOff();
     LED_On( LED3 );
 
-    while( UserInput == 0 )
+    while( mode == MODE_3 )
     {
+        // Wait in LPM4 for an interrupt (key pressed)
+        __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
+        __no_operation();                   // For debugger
     } // end while() loop
+
+    LED_Off( LED3 );
+    active = 0;
 }
 
 void Mode4(void)
@@ -93,9 +102,15 @@ void Mode4(void)
     LEDsOff();
     LED_On( LED4 );
 
-    while( UserInput == 0 )
+    while( mode == MODE_4 )
     {
+        // Wait in LPM4 for an interrupt (key pressed)
+        __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
+        __no_operation();                   // For debugger
     } // end while() loop
+
+    LED_Off( LED4 );
+    active = 0;
 }
 
 /**********************************************************************//**
@@ -107,15 +122,28 @@ void Mode4(void)
  *************************************************************************/
 void Mode5(void)
 {
-    //StartUpSequence();
+    // Variable initialisation
+    active = 1;
+
     LedSequence( 2 );
 
     UART_TX_Data("Mode 5\n", 7);
 
-    //LEDsOff();
     LED_On( LED5 );
 
     UCA0IE |= UCRXIE; // Enable UART RX Interrupt
+
+    while( mode == MODE_5 )
+    {
+        // Wait in LPM4 for an interrupt (key pressed)
+        __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
+        __no_operation();                   // For debugger
+    } // end while() loop
+
+    UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
+
+    LED_Off( LED5 );
+    active = 0;
 }
 
 
