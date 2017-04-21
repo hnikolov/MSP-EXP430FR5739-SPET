@@ -43,7 +43,7 @@ void Mode2(void)
     // Variable initialisation
     active = 1;
 
-    char str_Mode[] = "Mode 2: protocol (s-d-e) echo\n";
+    char str_Mode[] = "Mode 2: GPU echo: <STX> <PLD> <ETX> <BCC>\n";
     UART_TX_Data(str_Mode, strlen(str_Mode));
 
     LEDsOff();
@@ -53,10 +53,6 @@ void Mode2(void)
 
     while( UserInput == 0 )
     {
-//        LED_Toggle( LED2 );
-//        LongDelay();
-//        LED_Toggle( LED2 );
-
         if( GPU_RX_OK == 1 )
         {
             GPU_Check();

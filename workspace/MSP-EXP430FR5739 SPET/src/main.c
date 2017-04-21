@@ -84,7 +84,7 @@ void main(void)
             default:                    // This is not a valid mode (Switch S2 was pressed w/o mode select)
                 while( UserInput == 0 ) // Blink LED1 to indicate invalid entry
                 {
-                    P3OUT ^= BIT7;
+                    LED_Toggle( LED1 );
                     OneShotTimer( MILLISECONDS_40 );
                 }
                 break;

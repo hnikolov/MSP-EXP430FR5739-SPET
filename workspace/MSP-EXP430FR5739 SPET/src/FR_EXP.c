@@ -133,7 +133,7 @@ void RunningLight(void)
     {
         P3OUT = LED_ArrayP3[flag-1];
         PJOUT = LED_ArrayPJ[flag-1];
-        LongDelay();
+        OneShotTimer( MILLISECONDS_30 );
         flag--;
     }
 
@@ -141,8 +141,20 @@ void RunningLight(void)
     {
         P3OUT = LED_ArrayP3[flag];
         PJOUT = LED_ArrayPJ[flag];
-        LongDelay();
+        OneShotTimer( MILLISECONDS_30 );
         flag++;
+    }
+}
+
+void LED_Flash(unsigned char LEDn, unsigned int nTimes)
+{
+    while( nTimes > 0 )
+    {
+        LED_Toggle( LEDn );
+        OneShotTimer( MILLISECONDS_40 );
+        LED_Toggle( LEDn );
+        OneShotTimer( MILLISECONDS_40 );
+        nTimes--;
     }
 }
 
@@ -259,8 +271,8 @@ void SetupThermistor(void)
 {
   // ~16KHz sampling
   //Turn on Power
-  P2DIR |= BIT7;
-  P2OUT |= BIT7;
+  P2DIR  |= BIT7;
+  P2OUT  |= BIT7;
   
   // Configure ADC
   P1SEL1 |= BIT4;  

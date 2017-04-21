@@ -45,6 +45,8 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 
 #define UART_BUFF_SIZE 7
 
+// 8.75 / millisecond ?
+#define MILLISECONDS_30   260
 #define MILLISECONDS_40   350
 
 extern volatile unsigned int  ADCResult;
@@ -74,6 +76,7 @@ extern void ShutDownAccel(void);
 extern void SetupThermistor(void);
 extern void ShutDownTherm(void);
 
+void LED_Flash(unsigned char LEDn, unsigned int nTimes);
 //extern void LEDsOff();
 //extern void DisableSwitches(void);
 //extern void EnableSwitches(void);
