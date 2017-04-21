@@ -1,12 +1,10 @@
 /*******************************************************************************
- * GPU envelop:
- * <STX> <PLD> <ETX> <BCC>
- * <PLD> can be several characters
+ * GPU envelop: <STX> <PLD> <ETX> <BCC>
+ * <PLD> can be zero or several characters
  * Payload length determined by <ETX> (0x03)
  * BCC = XOR ( <PLD> <ETX> ); 7 bits
  *
  ******************************************************************************/
-
 #include "GPU.h"
 #include "FR_EXP.h"
 
@@ -20,15 +18,15 @@ typedef enum
     st_PLD,
     st_BCC
 
-} my_state_t;
+} gpu_state_t;
 
-my_state_t state = st_STX;
+gpu_state_t state = st_STX;
 
 void GPU_Rx( char input )
 {
     GPU_RX_OK = 0;
 
-    switch(state)
+    switch( state )
     {
         case st_STX:
             if( input == STX )
@@ -40,14 +38,11 @@ void GPU_Rx( char input )
             break;
 
         case st_PLD: // Note: can receive 0 payload
-            if( nBytes_Rx > BUFF_SIZE-2 ) // -2 to include the BCC byte
-            {
-                state = st_STX;
-            }
+            if( nBytes_Rx > BUFF_SIZE-2 ) { state = st_STX; } // -2 to include the BCC byte
             else
             {
-                if(      input == STX ) { nBytes_Rx = 0;    } // Read STX; stay at PLD
-                else if( input == ETX ) { state = st_BCC; } // Read ETX; switch to BCC
+                if(      input == STX )   { nBytes_Rx = 0;  } // Read STX; stay at PLD
+                else if( input == ETX )   { state = st_BCC; } // Read ETX; switch to BCC
 
                 GPU_Buffer[nBytes_Rx++] = input;
             }
@@ -59,18 +54,18 @@ void GPU_Rx( char input )
             GPU_RX_OK = 1;
             break;
 
-        default: // Unknown state; Should not happen
+        default:     // Unknown state; Should not happen
             state = st_STX;
             break;
     }
 }
 
-/*
+/**************************************************************************
  * The BCC is calculated by taking exclusive or of all transmitted bytes,
  * according to ANSI standard X3.28 - 1976. BCC is initialized to 0.
  * STX is excluded; ETX is included.
  * The BCC is also called the 'horizontal parity check'.
- */
+ **************************************************************************/
 char GPU_Calculate_BCC(char* pc_Buff, unsigned int ui_Size)
 {
     char          c_BCC = 0;

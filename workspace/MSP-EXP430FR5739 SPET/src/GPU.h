@@ -4,8 +4,7 @@
 #ifndef GPU_INCLUDED
 #define GPU_INCLUDED
 
-//#define STX 's'
-//#define ETX 'e'
+
 #define STX (0x02)
 #define ETX (0x03)
 #define ACK (0x06)

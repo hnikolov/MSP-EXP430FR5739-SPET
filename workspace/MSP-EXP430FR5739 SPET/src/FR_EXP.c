@@ -43,9 +43,7 @@
 #include "msp430fr5739.h"
 #include "FR_EXP.h"
 
-//volatile unsigned char TX_Buffer[UART_BUFF_SIZE] = {0};
 //volatile unsigned char ThreshRange[3] = {0};
-
 
 /**********************************************************************//**
  * @brief  Initialises system
@@ -86,7 +84,9 @@ void Init_System(void)
     P1OUT &= ~BIT4;
     P1DIR |=  BIT4;
 
+    // ----------------------
     // Terminate Unused GPIOs
+    // ----------------------
     // P1.0 - P1.7 is unused
     P1OUT &= ~(BIT0 + BIT1 + BIT2 + BIT3 + BIT5 + BIT6 + BIT7);
     P1DIR &= ~(BIT0 + BIT1 + BIT2 + BIT3 + BIT5 + BIT6 + BIT7);
@@ -381,24 +381,3 @@ void Init_UART()
 
     UCA0CTL1 &= ~UCSWRST;                     // release from reset
 }
-
-/*
-void UART_TX_Data(char *uc_pBuff, unsigned int ui_Size)
-{
-    // Note: Valid ui_Size has to be checked before the call
-    unsigned char counter = 0;
-
-    // TODO
-//    if( ui_Size > UART_BUFF_SIZE ) { return; }
-
-    while( counter < ui_Size )
-    {
-        while (!(UCA0IFG&UCTXIFG));           // USCI_A0 TX buffer ready?
-
-        UCA0TXBUF = uc_pBuff[counter];
-        counter++;
-    }
-}
-*/
-
-
