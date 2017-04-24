@@ -73,7 +73,7 @@ void Init_System(void)
     Init_LEDs();
     
     // UART 0
-    Init_UART();
+    Init_UART_9600();
 
     // P2.7 is used to power the voltage divider for the NTC thermistor
     P2OUT &= ~BIT7;
@@ -364,7 +364,17 @@ void OneShotTimer( unsigned int ticks )
     TA0CCTL0 = 0;
 }
 
-void Init_UART()
+// ACLK = 32768Hz, SMCLK = 8MHz
+/**************************************************************************
+ * N = 8_000_000/BaudRate
+ * UCA0BR0 = INT( N )
+ * if N > 16
+ *     UCOS16 = 1
+ *     UCBRx  = INT(N/16)
+ *     UCBRFx = INT([(N/16) – INT(N/16)] × 16)
+ *     UCBRSx = Look-up Table (18-4), Fractional part of N
+ */
+void Init_UART_9600()
 {
     // Configure UART pins P2.0 & P2.1
     P2SEL1 |=   BIT0 + BIT1;
@@ -373,11 +383,60 @@ void Init_UART()
     // Configure UART 0
     UCA0CTL1 |= UCSWRST;
     UCA0CTL1  = UCSSEL_2;                      // Set SMCLK as UCLk
-    UCA0BR0   = 52 ;                           // 9600 baud
-    // 8000000/(9600*16) - INT(8000000/(9600*16))=0.083
-    UCA0BR1 = 0;
-    // UCBRFx = 1, UCBRSx = 0x49, UCOS16 = 1 (Refer User Guide)
+//    UCA0BR0   = 52;                            // 9600 baud: N = 833.3333; INT(N/16) = 52
+//    UCA0BR1   = 0;
+    UCA0BRW   = 52;
+
+    // UCOS16 = 1
+    // UCBRFx = (52.0833 - 52) * 16 = 1.33 = 1
+    // UCBRSx = 0x49,  (Refer User Guide, Table 18-4 for fraction .3333)
+    //UCA0MCTLW = UCBRF_1 + (0x49 * UCBRS0) + UCOS16;
     UCA0MCTLW = 0x4911 ;
+
+
+
+    UCA0CTL1 &= ~UCSWRST;                     // release from reset
+}
+
+void Init_UART_19200()
+{
+    // Configure UART pins P2.0 & P2.1
+    P2SEL1 |=   BIT0 + BIT1;
+    P2SEL0 &= ~(BIT0 + BIT1);
+
+    // Configure UART 0
+    UCA0CTL1 |= UCSWRST;
+    UCA0CTL1  = UCSSEL_2;                      // Set SMCLK as UCLk
+
+    UCA0BRW   = 26;                            // 19200 baud: N = 416.6667; INT(N/16) = 26
+
+    // UCOS16 = 1
+    // UCBRFx = (26.0417 - 26) * 16 = 6.672 = 6
+    // UCBRSx = 0xD6,  (Refer User Guide, Table 18-4 for fraction .6667)
+    UCA0MCTLW = 0xD661 ;
+
+
+//    UCA0BRW = 26;
+//    UCA0MCTLW = UCBRF_1 + (0xD6 * UCBRS0) + UCOS16;
+
+    UCA0CTL1 &= ~UCSWRST;                     // release from reset
+}
+
+void Init_UART_115200()
+{
+    // Configure UART pins P2.0 & P2.1
+    P2SEL1 |=   BIT0 + BIT1;
+    P2SEL0 &= ~(BIT0 + BIT1);
+
+    // Configure UART 0
+    UCA0CTL1 |= UCSWRST;
+    UCA0CTL1  = UCSSEL_2;                     // Set SMCLK as UCLk
+    UCA0BR0   = 4 ;                           // 11520 baud: N = 69.444; INT(N/16) = 4.3402
+    UCA0BR1   = 0;
+    // UCOS16 = 1
+    // UCBRFx = (69.4444 - 69) * 16 = 7.1104 = 7
+    // UCBRSx = 0x55,  (Refer User Guide, Table 18-4 for fraction N-INT(N): .4444)
+    UCA0MCTLW = 0x5571 ;
 
     UCA0CTL1 &= ~UCSWRST;                     // release from reset
 }

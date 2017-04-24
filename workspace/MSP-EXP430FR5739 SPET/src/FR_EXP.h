@@ -45,6 +45,15 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 
 #define UART_BUFF_SIZE 7
 
+//#define MCU_CLK_8MHZ // Values from User Guide for 8MHz
+#define UART_BR    52
+#define UART_BRF    1
+#define UART_BRS 0x49
+#define UART_OS16   1
+
+//UCA0BRW = 104;
+//UCA0MCTLW = UCBRF_2 + (0xD6 * UCBRS0) + UCOS16;
+
 // 8.75 / millisecond ?
 #define MILLISECONDS_30   260
 #define MILLISECONDS_40   350
@@ -62,7 +71,9 @@ static char RXChar;
 // Function Declarations
 // TODO: Why extern?
 extern void Init_System(void);
-extern void Init_UART(void);
+extern void Init_UART_9600(void);
+extern void Init_UART_19200(void);
+extern void Init_UART_115200(void);
 
 extern void LedSequence( unsigned int ui_Repeats );
 extern void RunningLight(void);

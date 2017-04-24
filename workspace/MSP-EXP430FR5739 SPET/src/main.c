@@ -125,26 +125,26 @@ __interrupt void Port_4(void)
 
             if( active == 1 )
             {
-                mode = NOT_VALID;
+                active = 0;
+                mode   = NOT_VALID;
                 __bic_SR_register_on_exit(LPM4_bits); // To exit an active mode
             }
             break;
-          
+
         case P4IV_P4IFG1: // S2 pressed
             DisableSwitches();
             StartDebounceTimer(0);              // Re-enable switches after de-bounce
             P4IFG &= ~BIT1;                     // Clear P4.1 IFG
 
-            // This is the second time Switch2 is pressed
-            // Was the code executing inside of the modes?
-            if( active == 1 )
+            if( active == 1 ) // This is the second time Switch2 is pressed
             {
-                mode = NOT_VALID;
+                active = 0;
+                mode   = NOT_VALID;
                 __bic_SR_register_on_exit(LPM4_bits); // To exit an active mode
-                break;
             }
             else //{ Switch2Pressed = 1; } // Enter a mode
             {
+                active    = 1;
                 UserInput = 0;
                 // If the counter value is 0 it indicates either Mode 4 or invalid entry
                 if(( SwitchCounter == 0 ) && ( Switch1Pressed == 0 ))        { mode = NOT_VALID; }     // no switch1 press - invalid
@@ -157,12 +157,12 @@ __interrupt void Port_4(void)
                 Switch1Pressed = 0;
                 SwitchCounter  = 0;
                 __bic_SR_register_on_exit(LPM4_bits); // Exit LPM4
-                break;
             }
-  
+            break;
+
         default:
             break;
-    }  
+    }
 }
 
 /**********************************************************************//**
