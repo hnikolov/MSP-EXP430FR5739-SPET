@@ -74,6 +74,7 @@ void Init_System(void)
     
     // UART 0
     Init_UART_9600();
+//    Init_UART_19200();
 
     // P2.7 is used to power the voltage divider for the NTC thermistor
     P2OUT &= ~BIT7;
@@ -381,8 +382,9 @@ void Init_UART_9600()
     P2SEL0 &= ~(BIT0 + BIT1);
 
     // Configure UART 0
-    UCA0CTL1 |= UCSWRST;
-    UCA0CTL1  = UCSSEL_2;                      // Set SMCLK as UCLk
+    UCA0CTL1 = UCSWRST;                       // Place UCA0 in Reset to be configured
+
+    UCA0CTL1  |= UCSSEL_2;                      // Set SMCLK as UCLk
 //    UCA0BR0   = 52;                            // 9600 baud: N = 833.3333; INT(N/16) = 52
 //    UCA0BR1   = 0;
     UCA0BRW   = 52;
@@ -398,6 +400,20 @@ void Init_UART_9600()
     UCA0CTL1 &= ~UCSWRST;                     // release from reset
 }
 
+void Init_UART_4800()
+{
+    // Configure UART pins P2.0 & P2.1
+    P2SEL1 |=   BIT0 + BIT1;
+    P2SEL0 &= ~(BIT0 + BIT1);
+
+    // Configure UART 0
+    UCA0CTL1  = UCSWRST;                       // Place UCA0 in Reset to be configured
+    UCA0CTL1 |= UCSSEL_2;                      // Set SMCLK as UCLk
+    UCA0BRW   = 116;
+    UCA0MCTLW = 0xD6A1 ;
+    UCA0CTL1 &= ~UCSWRST;                     // release from reset
+}
+
 void Init_UART_19200()
 {
     // Configure UART pins P2.0 & P2.1
@@ -405,8 +421,8 @@ void Init_UART_19200()
     P2SEL0 &= ~(BIT0 + BIT1);
 
     // Configure UART 0
-    UCA0CTL1 |= UCSWRST;
-    UCA0CTL1  = UCSSEL_2;                      // Set SMCLK as UCLk
+    UCA0CTL1  = UCSWRST;                       // Place UCA0 in Reset to be configured
+    UCA0CTL1 |= UCSSEL_2;                      // Set SMCLK as UCLk
 
     UCA0BRW   = 26;                            // 19200 baud: N = 416.6667; INT(N/16) = 26
 
