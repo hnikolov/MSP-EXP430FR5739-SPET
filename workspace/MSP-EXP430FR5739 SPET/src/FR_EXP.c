@@ -94,9 +94,9 @@ void Init_System(void)
     P1REN |=  (BIT0 + BIT1 + BIT2 + BIT3 + BIT5 + BIT6 + BIT7);
   
     // P2.2 - P2.6 is unused
-    P2OUT &= ~(BIT2 + BIT3 + BIT4 + BIT5 + BIT6);
-    P2DIR &= ~(BIT2 + BIT3 + BIT4 + BIT5 + BIT6);
-    P2REN |=  (BIT2 + BIT3 + BIT4 + BIT5 + BIT6);
+    P2OUT &= ~(BIT2 + BIT3 + BIT4 + BIT5); // + BIT6); // TODO pin 6 as pwm
+    P2DIR &= ~(BIT2 + BIT3 + BIT4 + BIT5); // + BIT6);
+    P2REN |=  (BIT2 + BIT3 + BIT4 + BIT5); // + BIT6);
 
     // P3.0, P3.1 and P3.2 are accelerometer inputs
     P3OUT &= ~(BIT0 + BIT1 + BIT2);

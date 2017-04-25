@@ -51,18 +51,20 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 #define UART_BRS 0x49
 #define UART_OS16   1
 
-//UCA0BRW = 104;
-//UCA0MCTLW = UCBRF_2 + (0xD6 * UCBRS0) + UCOS16;
-
-// 8.75 / millisecond ?
-#define MILLISECONDS_30   260
-#define MILLISECONDS_40   350
+// 8.3 / millisecond ?
+#define MILLISECONDS_30   249
+#define MILLISECONDS_40   330
+#define MILLISECONDS_500  4150
+#define SECONDS_1         8300
 
 extern volatile unsigned int  ADCResult;
 extern volatile unsigned char active;
 extern volatile unsigned char ULP;
 extern volatile unsigned char mode;
 extern volatile unsigned char UserInput;
+
+
+extern volatile unsigned char PWM_Flag;
 
 volatile unsigned char ThreshRange[3]; // TODO
 

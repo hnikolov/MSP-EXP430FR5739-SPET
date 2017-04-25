@@ -55,6 +55,7 @@ volatile unsigned char SwitchCounter  = 0;
 volatile unsigned char Switch1Pressed = 0;
 volatile unsigned char Switch2Pressed = 0;
 
+volatile unsigned char PWM_Flag       = 0;
 
 void main(void)
 {  
@@ -103,8 +104,6 @@ void main(void)
 #pragma vector=PORT4_VECTOR
 __interrupt void Port_4(void)
 {
-    UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
-
     switch(__even_in_range(P4IV,P4IV_P4IFG1))
     {
         case P4IV_P4IFG0: // S1 pressed
@@ -192,6 +191,25 @@ __interrupt void Timer1_A0_ISR(void)
    TA1CCTL0 = 0;
    TA1CTL   = 0;
    EnableSwitches();
+}
+
+// Timer1 B0 interrupt service routine (enable timer 1)
+#pragma vector = TIMER0_B0_VECTOR
+__interrupt void TIMER0_B0_ISR(void) {
+//    __bic_SR_register_on_exit( LPM4_bits );
+    PWM_Flag ^= 0x01;
+    LED_Off( LED3 );
+}
+
+// Timer1 B0 interrupt service routine
+#pragma vector = TIMER1_B0_VECTOR
+__interrupt void TIMER1_B0_ISR(void) {
+    if( PWM_Flag == 1 )
+    {
+//    __bic_SR_register_on_exit( LPM4_bits );
+        LED_Toggle( LED3 );
+        P2OUT ^= BIT6;
+    }
 }
 
 /**********************************************************************//**

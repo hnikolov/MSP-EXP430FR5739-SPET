@@ -75,19 +75,44 @@ void Mode2(void)
     LED_Off( LED2 );
 }
 
+// 2 timers used as PWM outputs
 void Mode3(void)
 {
-    UART_TX_Data("Mode 3\n", 7);
+    char str_Mode[] = "Mode 3: Timers to modulate signal on pin\n";
+    UART_TX_Data(str_Mode, strlen(str_Mode));
 
     LEDsOff();
     LED_On( LED3 );
 
+    // Settings
+    P2DIR |= BIT6;
+    P2OUT |= BIT6;
+
+    // TODO: Duty cycle control
+    TB1CCTL0 = CCIE;                    // TACCR0 interrupt enabled
+    TB1CCR0  = MILLISECONDS_30;
+    TB1CTL   = TBSSEL_1 + MC_1;         // ACLK, up mode
+
+    TB0CCTL0 = CCIE;                    // TACCR0 interrupt enabled
+    TB0CCR0  = SECONDS_1;
+    TB0CTL   = TBSSEL_1 + MC_1;         // ACLK, up mode
+
+    //-----------------------
+    __bis_SR_register(LPM4_bits + GIE); // Enter LPM4, enable interrupts
+/*
     while( mode == MODE_3 )
     {
         // Wait in LPM4 for an interrupt (key pressed)
-        __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
+        __bis_SR_register(LPM4_bits + GIE); // Enter LPM4, enable interrupts
         __no_operation();                   // For debugger
+        LED_Toggle( LED3 );
     } // end while() loop
+*/
+    TB1CTL   = 0;
+    TB1CCTL0 = 0;
+
+    TB0CTL   = 0;
+    TB0CCTL0 = 0;
 
     LED_Off( LED3 );
 }
