@@ -51,7 +51,7 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 #define UART_BRS 0x49
 #define UART_OS16   1
 
-// 8.3 / millisecond ?
+// 8.3 / millisecond (7.84?)
 #define MILLISECONDS_30   249
 #define MILLISECONDS_40   330
 #define MILLISECONDS_500  4150

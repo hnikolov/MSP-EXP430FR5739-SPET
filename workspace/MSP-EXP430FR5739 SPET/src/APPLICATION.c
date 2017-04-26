@@ -75,7 +75,6 @@ void Mode2(void)
     LED_Off( LED2 );
 }
 
-// 2 timers used as PWM outputs
 void Mode3(void)
 {
     char str_Mode[] = "Mode 3: Timers to modulate signal on pin\n";
@@ -85,29 +84,22 @@ void Mode3(void)
     LED_On( LED3 );
 
     // Settings
-    P2DIR |= BIT6;
-    P2OUT |= BIT6;
+    P2OUT &= ~BIT6;
+    P2DIR |=  BIT6;   // Set P2.6 to output direction
 
-    // TODO: Duty cycle control
+    // Timer 1: carrier
     TB1CCTL0 = CCIE;                    // TACCR0 interrupt enabled
     TB1CCR0  = MILLISECONDS_30;
     TB1CTL   = TBSSEL_1 + MC_1;         // ACLK, up mode
 
-    TB0CCTL0 = CCIE;                    // TACCR0 interrupt enabled
-    TB0CCR0  = SECONDS_1;
+    // Timer 0: envelop
+    TB0CCTL0 = CCIE;                    // TBCCR0 interrupt enabled
+    TB0CCR0  = SECONDS_1;               // CCR0: Period
     TB0CTL   = TBSSEL_1 + MC_1;         // ACLK, up mode
 
     //-----------------------
     __bis_SR_register(LPM4_bits + GIE); // Enter LPM4, enable interrupts
-/*
-    while( mode == MODE_3 )
-    {
-        // Wait in LPM4 for an interrupt (key pressed)
-        __bis_SR_register(LPM4_bits + GIE); // Enter LPM4, enable interrupts
-        __no_operation();                   // For debugger
-        LED_Toggle( LED3 );
-    } // end while() loop
-*/
+
     TB1CTL   = 0;
     TB1CCTL0 = 0;
 
@@ -117,19 +109,66 @@ void Mode3(void)
     LED_Off( LED3 );
 }
 
+//*******************************************************************************
+//  MSP430FR57x Demo - TimerB, PWM TB0.1-2, Up Mode, DCO SMCLK
+//
+//  Description: This program generates two PWM outputs on P1.4,P1.5 using
+//  TimerB configured for up mode. The value in CCR0, 1000-1, defines the PWM
+//  period and the values in CCR1 and CCR2 the PWM duty cycles. Using ~1MHz
+//  SMCLK as TACLK, the timer period is ~1ms with a 75% duty cycle on P1.4
+//  and 25% on P1.5.
+//  ACLK = n/a, SMCLK = MCLK = TACLK = 1MHz // TODO
+//
+//
+//           MSP430FR5739
+//         ---------------
+//     /|\|               |
+//      | |               |
+//      --|RST            |
+//        |               |
+//        |     P1.4/TB0.1|--> CCR1 - 75% PWM
+//        |     P1.5/TB0.2|--> CCR2 - 25% PWM
+//
+//   Priya Thanigai
+//   Texas Instruments Inc.
+//   August 2010
+//******************************************************************************
 void Mode4(void)
 {
-    UART_TX_Data("Mode 4\n", 7);
+    char str_Mode[] = "Mode 4: PWM, duty cycle changed dynamically\n";
+    UART_TX_Data(str_Mode, strlen(str_Mode));
 
     LEDsOff();
     LED_On( LED4 );
 
-    while( mode == MODE_4 )
-    {
-        // Wait in LPM4 for an interrupt (key pressed)
-        __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
-        __no_operation();                   // For debugger
-    } // end while() loop
+//    P1DIR |= BIT4+BIT5;                       // P1.4 and P1.5 output
+//    P1SEL0 |= BIT4+BIT5;                      // P1.4 and P1.5 options select
+    P1DIR  |= BIT5;                      // P1.5 output
+    P1SEL0 |= BIT5;                      // P1.5 options select
+
+    TB0CCR0 = 1000-1;                         // PWM Period
+    // P1.4 is used as input from NTC voltage divider
+    // TB0CCTL1 = OUTMOD_7;                      // CCR1 reset/set
+    // TB0CCR1 = 750;                            // CCR1 PWM duty cycle
+
+    TB0CCTL2 = OUTMOD_7;                      // CCR2 reset/set
+    TB0CCR2  = 500;                            // CCR2 PWM duty cycle
+    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;         // SMCLK (8MHz), up mode, clear TAR
+
+    // Used to alter the duty cycle of TB0CCR2
+    TB2CCR0  = 500;
+    TB2CCTL0 = CCIE;
+    TB2CTL   = TBSSEL_2 + MC_1 + TBCLR;       // SMCLK (8MHz), up mode, clear TAR
+
+    __bis_SR_register(LPM4_bits);             // Enter LPM0
+    __no_operation();                         // For debugger
+
+    //Exit this mode
+    TB0CTL   = 0;
+
+    TB2CCTL0 = 0;
+    TB2CTL   = 0;
+
 
     LED_Off( LED4 );
 }

@@ -193,15 +193,16 @@ __interrupt void Timer1_A0_ISR(void)
    EnableSwitches();
 }
 
-// Timer1 B0 interrupt service routine (enable timer 1)
+// Timer TB0x0 interrupt service routine (enable timer 1)
 #pragma vector = TIMER0_B0_VECTOR
 __interrupt void TIMER0_B0_ISR(void) {
 //    __bic_SR_register_on_exit( LPM4_bits );
     PWM_Flag ^= 0x01;
     LED_Off( LED3 );
+    P2OUT &= ~BIT6;
 }
 
-// Timer1 B0 interrupt service routine
+// Timer TB1x0 interrupt service routine
 #pragma vector = TIMER1_B0_VECTOR
 __interrupt void TIMER1_B0_ISR(void) {
     if( PWM_Flag == 1 )
@@ -210,6 +211,15 @@ __interrupt void TIMER1_B0_ISR(void) {
         LED_Toggle( LED3 );
         P2OUT ^= BIT6;
     }
+}
+
+// Timer TB2x0 interrupt service routine
+int direction = 2;
+
+#pragma vector = TIMER2_B0_VECTOR
+__interrupt void TIMER2_B0_ISR(void) {
+    if( TB0CCR2 > 997 || TB0CCR2 < 3 ) { direction = -direction; }
+    TB0CCR2 += direction;
 }
 
 /**********************************************************************//**

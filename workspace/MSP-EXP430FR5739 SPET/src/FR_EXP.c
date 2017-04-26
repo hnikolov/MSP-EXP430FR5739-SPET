@@ -54,12 +54,15 @@
  *************************************************************************/
 void Init_System(void)
 {
+    // VLO clock is 10KHz
     // Startup clock system in max. DCO setting ~8MHz
     // This value is closer to 10MHz on untrimmed parts
     CSCTL0_H = 0xA5;                          // Unlock register
-    CSCTL1  |= DCOFSEL0 + DCOFSEL1;           // Set max. DCO setting
-    CSCTL2   = SELA_1   + SELS_3 + SELM_3;    // set ACLK = vlo; MCLK = DCO
+    CSCTL1  |= DCOFSEL0 + DCOFSEL1;           // Set max. DCO setting 8 MHz (use DCORSEL for high freq devices)
+    CSCTL2   = SELA_1   + SELS_3 + SELM_3;    // set ACLK = vlo; SMCLK = MCLK = DCO
     CSCTL3   = DIVA_0   + DIVS_0 + DIVM_0;    // set all dividers
+//    CSCTL2 = SELA_3 + SELS_3 + SELM_3;      // set ACLK = SMCLK = DCO/8
+//    CSCTL3 = DIVA_3 + DIVS_3 + DIVM_3;        // set all dividers
     CSCTL0_H = 0x01;                          // Lock Register
   
     // Turn off temp.
@@ -88,15 +91,15 @@ void Init_System(void)
     // ----------------------
     // Terminate Unused GPIOs
     // ----------------------
-    // P1.0 - P1.7 is unused
-    P1OUT &= ~(BIT0 + BIT1 + BIT2 + BIT3 + BIT5 + BIT6 + BIT7);
-    P1DIR &= ~(BIT0 + BIT1 + BIT2 + BIT3 + BIT5 + BIT6 + BIT7);
-    P1REN |=  (BIT0 + BIT1 + BIT2 + BIT3 + BIT5 + BIT6 + BIT7);
+    // P1.0 - P1.7 is unused (P1.5 as PWM)
+    P1OUT &= ~(BIT0 + BIT1 + BIT2 + BIT3 + BIT6 + BIT7);
+    P1DIR &= ~(BIT0 + BIT1 + BIT2 + BIT3 + BIT6 + BIT7);
+    P1REN |=  (BIT0 + BIT1 + BIT2 + BIT3 + BIT6 + BIT7);
   
     // P2.2 - P2.6 is unused
-    P2OUT &= ~(BIT2 + BIT3 + BIT4 + BIT5); // + BIT6); // TODO pin 6 as pwm
-    P2DIR &= ~(BIT2 + BIT3 + BIT4 + BIT5); // + BIT6);
-    P2REN |=  (BIT2 + BIT3 + BIT4 + BIT5); // + BIT6);
+    P2OUT &= ~(BIT2 + BIT3 + BIT4); // + BIT5); // + BIT6); // TODO pin 6 as pwm
+    P2DIR &= ~(BIT2 + BIT3 + BIT4); // + BIT5); // + BIT6);
+    P2REN |=  (BIT2 + BIT3 + BIT4); // + BIT5); // + BIT6);
 
     // P3.0, P3.1 and P3.2 are accelerometer inputs
     P3OUT &= ~(BIT0 + BIT1 + BIT2);
@@ -365,7 +368,7 @@ void OneShotTimer( unsigned int ticks )
     TA0CCTL0 = 0;
 }
 
-// ACLK = 32768Hz, SMCLK = 8MHz
+// ACLK = VLO (10KHz), SMCLK = MCLK = 8MHz
 /**************************************************************************
  * N = 8_000_000/BaudRate
  * UCA0BR0 = INT( N )
