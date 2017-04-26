@@ -51,7 +51,13 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 #define UART_BRS 0x49
 #define UART_OS16   1
 
-// 8.3 / millisecond (7.84?)
+// TODO: Define constants for 8MHz SMCLK (8MHz)
+// 7.95 / uS (measured)
+// 40KHz carrier = 25uS; constant = 200 @ 8MHz
+#define MICROSECONDS_25 199
+#define KHz_40 199
+
+// 8.3 / millisecond (7.84?) @ ALKC = VLO (10KHz)
 #define MILLISECONDS_30   249
 #define MILLISECONDS_40   330
 #define MILLISECONDS_500  4150

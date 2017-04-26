@@ -146,7 +146,7 @@ void Mode4(void)
     P1DIR  |= BIT5;                      // P1.5 output
     P1SEL0 |= BIT5;                      // P1.5 options select
 
-    TB0CCR0 = 1000-1;                         // PWM Period
+    TB0CCR0 = 1000-1;                         // PWM Period = 125.75uS @ SMCLK (8MHz)
     // P1.4 is used as input from NTC voltage divider
     // TB0CCTL1 = OUTMOD_7;                      // CCR1 reset/set
     // TB0CCR1 = 750;                            // CCR1 PWM duty cycle
@@ -155,6 +155,7 @@ void Mode4(void)
     TB0CCR2  = 500;                            // CCR2 PWM duty cycle
     TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;         // SMCLK (8MHz), up mode, clear TAR
 
+    // TODO: Use i timer to generate the carrier @ 40KHz
     // Used to alter the duty cycle of TB0CCR2
     TB2CCR0  = 500;
     TB2CCTL0 = CCIE;
