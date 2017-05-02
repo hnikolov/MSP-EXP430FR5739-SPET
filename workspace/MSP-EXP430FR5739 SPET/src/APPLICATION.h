@@ -31,4 +31,6 @@ extern void FRAM_Write      (unsigned int StartAddress);
 extern void LEDSequence     (unsigned int DiffValue, unsigned char temp);
 extern void LEDSequenceWrite(unsigned int flag);
 
+extern int getBit();
+
 #endif // APPLICATION_INCLUDED

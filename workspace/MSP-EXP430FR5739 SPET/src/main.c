@@ -215,11 +215,31 @@ __interrupt void TIMER1_B0_ISR(void) {
 
 // Timer TB2x0 interrupt service routine
 int direction = 2;
+int flag      = 0;
+int prev_flag = 0; // To detect data transition
 
 #pragma vector = TIMER2_B0_VECTOR
 __interrupt void TIMER2_B0_ISR(void) {
-    if( TB0CCR2 > 997 || TB0CCR2 < 3 ) { direction = -direction; }
-    TB0CCR2 += direction;
+    if( mode == MODE_4 )
+    {
+        if( TB0CCR2 > 997 || TB0CCR2 < 3 ) { direction = -direction; }
+        TB0CCR2 += direction;
+    }
+    else if( mode == MODE_5 )
+    {
+        flag = getBit();
+        if( flag == 1 && prev_flag == 0 )      // Bit changes from 0 to 1
+        {
+            P1SEL0 |= BIT5;                    // Timer output selected
+            TB0CTL  = TBSSEL_2 + MC_1 + TBCLR; // SMCLK (8MHz), up mode, clear TAR
+        }
+        else if( flag == 0 && prev_flag == 1 ) // Bit changes from 1 to 0
+        {
+            P1SEL0 &= ~BIT5;                   // Makes P1.5 a regular I/O pin (output set to 0)
+            TB0CTL  = 0;                       // Stop the timer
+        }
+        prev_flag = flag;
+    }
 }
 
 /**********************************************************************//**

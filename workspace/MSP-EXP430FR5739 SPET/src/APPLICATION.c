@@ -152,16 +152,15 @@ void Mode4(void)
     // TB0CCR1 = 750;                            // CCR1 PWM duty cycle
 
     TB0CCTL2 = OUTMOD_7;                      // CCR2 reset/set
-    TB0CCR2  = 500;                            // CCR2 PWM duty cycle
-    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;         // SMCLK (8MHz), up mode, clear TAR
+    TB0CCR2  = 500;                           // CCR2 PWM duty cycle
+    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;       // SMCLK (8MHz), up mode, clear TAR
 
-    // TODO: Use i timer to generate the carrier @ 40KHz
     // Used to alter the duty cycle of TB0CCR2
     TB2CCR0  = 500;
     TB2CCTL0 = CCIE;
     TB2CTL   = TBSSEL_2 + MC_1 + TBCLR;       // SMCLK (8MHz), up mode, clear TAR
 
-    __bis_SR_register(LPM4_bits);             // Enter LPM0
+    __bis_SR_register(LPM4_bits);             // Enter LPM4
     __no_operation();                         // For debugger
 
     //Exit this mode
@@ -169,7 +168,6 @@ void Mode4(void)
 
     TB2CCTL0 = 0;
     TB2CTL   = 0;
-
 
     LED_Off( LED4 );
 }
@@ -183,27 +181,49 @@ void Mode4(void)
  *************************************************************************/
 void Mode5(void)
 {
-    char str_Mode[] = "Mode 5: char echo\n";
+    char str_Mode[] = "Mode 5: PWM, Modulated output @ 40KHz\n";
     UART_TX_Data(str_Mode, strlen(str_Mode));
 
     LedSequence( 2 );
     LED_On( LED5 );
 
-    UCA0IE |= UCRXIE; // Enable UART RX Interrupt
+    P1DIR  |= BIT5;                      // P1.5 output
+    P1SEL0 |= BIT5;                      // P1.5 options select
+    P1OUT  &= ~BIT5;                     // Set P1.5 to 0 (low) when PWM is stopped
 
-    while( mode == MODE_5 )
-    {
-        // Wait in LPM4 for an interrupt (key pressed)
-        __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
-        __no_operation();                   // For debugger
-    } // end while() loop
+    TB0CCR0  = KHz_40-1;                 // PWM Period = 25 uS @ SMCLK (8MHz)
 
-    UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
+    TB0CCTL2 = OUTMOD_7;                 // CCR2 7:reset/set; 3:set/reset
+    TB0CCR2  = KHz_40 >> 1;              // CCR2 50% PWM duty cycle
+    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
+
+    // Used to alter modulated output/silence
+    TB2CCR0  = 2500;                     // Represents Bit duration
+    TB2CCTL0 = CCIE;
+    TB2CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
+
+    __bis_SR_register(LPM4_bits);        // Enter LPM4
+    __no_operation();                    // For debugger
+
+    // Exit this mode
+    TB0CTL   = 0;
+
+    TB2CCTL0 = 0;
+    TB2CTL   = 0;
 
     LED_Off( LED5 );
 }
 
+int getBit()
+{
+    const char TxByte = 0xA5;
 
+    static char idx = 7;
+    idx++;
+    if( idx == 8 ) { idx = 0; } // LSB first
+
+    return (TxByte >> idx) & 0x01;
+}
 
 /**********************************************************************//**
  * @brief  LED Toggle Sequence for FRAM Writes
