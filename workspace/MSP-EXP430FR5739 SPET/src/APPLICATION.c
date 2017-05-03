@@ -26,13 +26,18 @@ void Mode1(void)
     LED_On( LED1 );
 
     UCA0IE |= UCRXIE; // Enable UART RX Interrupt
-
+/*
     while( mode == MODE_1 )
     {
         // Wait in LPM4 for an interrupt (key pressed)
         __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
         __no_operation();                   // For debugger
     } // end while() loop
+*/
+    __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
+    __no_operation();
+
+    UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
 
     LED_Off( LED1 );
 }
@@ -55,7 +60,6 @@ void Mode2(void)
 
     UCA0IE |= UCRXIE; // Enable UART RX Interrupt
 
-//    while( UserInput == 0 )
     while( mode == MODE_2 )
     {
         if( GPU_RX_OK == 1 )
@@ -187,6 +191,8 @@ void Mode5(void)
     LedSequence( 2 );
     LED_On( LED5 );
 
+    UCA0IE |= UCRXIE;                    // Enable UART RX Interrupt
+
     P1DIR  |= BIT5;                      // P1.5 output
     P1SEL0 |= BIT5;                      // P1.5 options select
     P1OUT  &= ~BIT5;                     // Set P1.5 to 0 (low) when PWM is stopped
@@ -206,6 +212,8 @@ void Mode5(void)
     __no_operation();                    // For debugger
 
     // Exit this mode
+    UCA0IE &= ~UCRXIE;                   // Disable UART RX Interrupt
+
     TB0CTL   = 0;
 
     TB2CCTL0 = 0;
