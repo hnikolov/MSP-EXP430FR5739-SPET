@@ -262,19 +262,18 @@ void __attribute__ ((interrupt(USCI_A0_VECTOR))) USCI_A0_ISR (void)
     {
         case 0:  break;                    // Vector 0 - no interrupt
         case 2:                            // Vector 2 - RXIFG
-//            while (!(UCA0IFG&UCTXIFG));    // USCI_A0 TX buffer ready?
-//            UCA0TXBUF = UCA0RXBUF;         // TX -> RXed character
             RXChar = UCA0RXBUF;
 
             switch( mode )
             {
-                case MODE_1:   UART_TX_Char( RXChar );  break; // echo
-                case MODE_2:   GPU_Rx( RXChar );
+                case MODE_1:   UART_TX_Char( RXChar );  break;       // echo (Does not work without the debugger)
+                case MODE_2:   GPU_Rx( RXChar );                     // TODO: Move this function out of ISR
                                __bic_SR_register_on_exit(LPM4_bits); // Exit LPM4
+                               __no_operation();                     // For debugger
                                break;
                 case MODE_3:   break;
                 case MODE_4:   break;
-                case MODE_5:   UART_TX_Char( RXChar );  break; // echo
+                case MODE_5:   UART_TX_Char( RXChar );  break;        // echo
                 default:       break;
             }
             break;
