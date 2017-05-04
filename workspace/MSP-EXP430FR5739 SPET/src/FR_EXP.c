@@ -229,6 +229,7 @@ void SetupAccel(void)
 
     // Allow the accelerometer to settle before sampling any data
     __delay_cycles(200000);
+    __no_operation();
 
     // Single channel, once,
     ADC10CTL0 &= ~ADC10ENC;                        // Ensure ENC is clear
@@ -284,6 +285,7 @@ void SetupThermistor(void)
   
   // Allow for settling delay 
   __delay_cycles(50000);
+  __no_operation();
   
   // Configure ADC
   ADC10CTL0 &= ~ADC10ENC; 

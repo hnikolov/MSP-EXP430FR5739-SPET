@@ -127,6 +127,7 @@ __interrupt void Port_4(void)
                 active = 0;
                 mode   = NOT_VALID;
                 __bic_SR_register_on_exit(LPM4_bits); // To exit an active mode
+                __no_operation();
             }
             break;
 
@@ -140,6 +141,7 @@ __interrupt void Port_4(void)
                 active = 0;
                 mode   = NOT_VALID;
                 __bic_SR_register_on_exit(LPM4_bits); // To exit an active mode
+                __no_operation();
             }
             else //{ Switch2Pressed = 1; } // Enter a mode
             {
@@ -156,6 +158,7 @@ __interrupt void Port_4(void)
                 Switch1Pressed = 0;
                 SwitchCounter  = 0;
                 __bic_SR_register_on_exit(LPM4_bits); // Exit LPM4
+                __no_operation();
             }
             break;
 
@@ -175,6 +178,7 @@ __interrupt void Port_4(void)
 __interrupt void Timer_A (void)
 {  
     __bic_SR_register_on_exit( LPM4_bits );
+    __no_operation();
 }
 
 

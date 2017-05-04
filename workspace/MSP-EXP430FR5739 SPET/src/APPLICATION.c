@@ -101,8 +101,8 @@ void Mode3(void)
     TB0CCR0  = SECONDS_1;               // CCR0: Period
     TB0CTL   = TBSSEL_1 + MC_1;         // ACLK, up mode
 
-    //-----------------------
     __bis_SR_register(LPM4_bits + GIE); // Enter LPM4, enable interrupts
+    __no_operation();
 
     TB1CTL   = 0;
     TB1CCTL0 = 0;
@@ -231,113 +231,4 @@ int getBit()
     if( idx == 8 ) { idx = 0; } // LSB first
 
     return (TxByte >> idx) & 0x01;
-}
-
-/**********************************************************************//**
- * @brief  LED Toggle Sequence for FRAM Writes
- *
- * @param
- * sequence flag
- *
- * @return none
- *************************************************************************/
-void LEDSequenceWrite(unsigned int flag)
-{
-    // The LED sequence fills p based on flag value
-    unsigned char LED_ArrayPJ[] = {0x08,0x0C,0x0E,0x0F};
-    unsigned char LED_ArrayP3[] = {0x80,0xC0,0xE0,0xF0};
-
-    // LED Sequencing for FRAM writes
-    if( flag < 4 )
-    {
-        PJOUT &= ~(BIT0 +BIT1+BIT2+BIT3);
-        P3OUT &= ~(BIT4 +BIT5+BIT6+BIT7);
-        P3OUT |= LED_ArrayP3[flag];
-    }
-    else
-    {
-        PJOUT &= ~(BIT0 +BIT1+BIT2+BIT3);
-        P3OUT &= ~(BIT4 +BIT5+BIT6+BIT7);
-        // Keep the entire P3 array on
-        P3OUT |= LED_ArrayP3[3];
-        PJOUT |= LED_ArrayPJ[flag-4];
-    }
-}
-
-/**********************************************************************//**
- * @brief  LED Toggle Sequence
- *
- * @param
- * DiffValue Difference between calibrated and current measurement
- * temp Direction of difference (positive or negative)
- * @return none
- *************************************************************************/
-void LEDSequence(unsigned int DiffValue, unsigned char temp)
-{
-    // The same scale is used for cold & hot and tilt up/down
-    // only the thresholds are different
-    P3OUT |= BIT4;                            // Light up the middle LEDs
-    PJOUT |= BIT3;
-
-    if(DiffValue < ThreshRange[0])            // Very close to CAL value
-    {
-        P3OUT |= BIT4;
-        PJOUT |= BIT3;
-        PJOUT &= ~(BIT0+BIT1+BIT2);
-        P3OUT &= ~(BIT7+BIT6+BIT5);
-        counter = 0x34;
-    }
-
-    if ((DiffValue >=ThreshRange[0]) && (DiffValue < ThreshRange[1]))
-    {
-        // Light up one LED
-        if(temp == UP)                        // Tilt up, temp up
-        {
-            PJOUT |= BIT2;
-            PJOUT &= ~(BIT1+BIT0);
-            P3OUT &= ~(BIT7+BIT6+BIT5);
-            counter = 5;
-        }
-        else                                  // Tilt down, temp down
-        {
-            PJOUT &= ~(BIT0+BIT1+BIT2);
-            P3OUT |= BIT5;
-            P3OUT &= ~(BIT6+BIT7);
-            counter = 2;
-        }
-    }
-    if ((DiffValue >= ThreshRange[1]) && (DiffValue < ThreshRange[2]))
-    {
-        // Light up two LEDs
-        if(temp == UP)                        // Tilt up 2, temp up 2
-        {
-            PJOUT |= BIT2 + BIT1;
-            PJOUT &= ~(BIT0);
-            P3OUT &= ~(BIT7+BIT6+BIT5);
-            counter = 6;
-        }
-        else                                  // Tilt down 2, temp down 2
-        {
-            PJOUT &= ~(BIT2+BIT1+BIT0);
-            P3OUT |= BIT5 + BIT6;
-            P3OUT &= ~(BIT7);
-            counter = 1;
-        }
-    }
-    if (DiffValue > ThreshRange[2])
-    {
-        // Light up three LEDs
-        if(temp == UP)                        // Tilt up 3, temp up 3
-        {
-            PJOUT |= BIT2 + BIT1 + BIT0;
-            P3OUT &= ~(BIT7+BIT6+BIT5);
-            counter = 7;
-        }
-        else                                  // Tilt down 3, temp down 3
-        {
-            P3OUT |= BIT5+BIT6+BIT7;
-            PJOUT &= ~(BIT2+BIT1+BIT0);
-            counter = 0;
-        }
-    }
 }
