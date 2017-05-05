@@ -17,6 +17,7 @@ extern volatile unsigned int RX_OK;
  *
  * @return none
  *************************************************************************/
+// NOTE: This mode does not work without the debugger and LPM4
 void Mode1(void)
 {
     char str_Mode[] = "Mode 1: char echo\n";
@@ -26,16 +27,17 @@ void Mode1(void)
     LED_On( LED1 );
 
     UCA0IE |= UCRXIE; // Enable UART RX Interrupt
-/*
+
     while( mode == MODE_1 )
     {
-        // Wait in LPM4 for an interrupt (key pressed)
-        __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
+        // Wait in for an interrupt (UART or key pressed)
+        __bis_SR_register(LPM2_bits + GIE); // Enter LPM2 w/interrupt
         __no_operation();                   // For debugger
+
+        // TODO: sends a char on exit (when button is pressed)
+        UART_TX_Char( RXChar );
+
     } // end while() loop
-*/
-    __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
-    __no_operation();
 
     UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
 
@@ -50,6 +52,7 @@ void Mode1(void)
  *
  * @return none
  *************************************************************************/
+// NOTE: This mode does not work without the debugger and LPM4
 void Mode2(void)
 {
     char str_Mode[] = "Mode 2: GPU echo: <STX> <PLD> <ETX> <BCC>\n";
@@ -69,8 +72,8 @@ void Mode2(void)
             GPU_Tx();
             GPU_RX_OK = 0;
         }
-        // Wait in LPM4 after every character received
-        __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
+        // Wait in LPM2 after every character received
+        __bis_SR_register(LPM2_bits + GIE); // Enter LPM2 w/interrupt
         __no_operation();                   // For debugger
     } // end of while() loop
 

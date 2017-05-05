@@ -253,6 +253,11 @@ __interrupt void TIMER2_B0_ISR(void) {
  *
  * @return none
  *************************************************************************/
+
+// General recommendation:
+//     Read the value into a global variable and leave the low power mode on exit.
+//     Do all the other stuff in the main application.
+
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector=USCI_A0_VECTOR
 __interrupt void USCI_A0_ISR(void)
@@ -270,9 +275,12 @@ void __attribute__ ((interrupt(USCI_A0_VECTOR))) USCI_A0_ISR (void)
 
             switch( mode )
             {
-                case MODE_1:   UART_TX_Char( RXChar );  break;       // echo (Does not work without the debugger)
+//            case MODE_1:   UART_TX_Char( RXChar );  break;       // echo (Does not work without the debugger)
+                case MODE_1:   __bic_SR_register_on_exit(LPM2_bits); // Exit LPM4
+                               __no_operation();                     // For debugger
+                               break;
                 case MODE_2:   GPU_Rx( RXChar );                     // TODO: Move this function out of ISR
-                               __bic_SR_register_on_exit(LPM4_bits); // Exit LPM4
+                               __bic_SR_register_on_exit(LPM2_bits); // Exit LPM4
                                __no_operation();                     // For debugger
                                break;
                 case MODE_3:   break;
