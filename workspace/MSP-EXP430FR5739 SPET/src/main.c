@@ -275,17 +275,17 @@ void __attribute__ ((interrupt(USCI_A0_VECTOR))) USCI_A0_ISR (void)
 
             switch( mode )
             {
-//            case MODE_1:   UART_TX_Char( RXChar );  break;       // echo (Does not work without the debugger)
-                case MODE_1:   __bic_SR_register_on_exit(LPM2_bits); // Exit LPM4
+                case MODE_1:   UART_RX_OK = 1;
+                               __bic_SR_register_on_exit(LPM2_bits); // Exit LPM4
                                __no_operation();                     // For debugger
                                break;
-                case MODE_2:   GPU_Rx( RXChar );                     // TODO: Move this function out of ISR
+                case MODE_2:   UART_RX_OK = 1;
                                __bic_SR_register_on_exit(LPM2_bits); // Exit LPM4
                                __no_operation();                     // For debugger
                                break;
                 case MODE_3:   break;
                 case MODE_4:   break;
-                case MODE_5:   UART_TX_Char( RXChar );  break;        // echo
+                case MODE_5:   UART_TX_Char( RXChar );  break;        // echo, do not exit LPM
                 default:       break;
             }
             break;

@@ -75,6 +75,8 @@ extern volatile unsigned char PWM_Flag;
 volatile unsigned char ThreshRange[3]; // TODO
 
 volatile char RXChar;
+volatile unsigned int UART_RX_OK;
+
 
 // Function Declarations
 // TODO: Why extern?

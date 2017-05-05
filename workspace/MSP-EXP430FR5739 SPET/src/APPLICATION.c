@@ -23,6 +23,8 @@ void Mode1(void)
     char str_Mode[] = "Mode 1: char echo\n";
     UART_TX_Data(str_Mode, strlen(str_Mode));
 
+    UART_RX_OK = 0;
+
     LEDsOff();
     LED_On( LED1 );
 
@@ -30,13 +32,15 @@ void Mode1(void)
 
     while( mode == MODE_1 )
     {
+        if( UART_RX_OK == 1)
+        {
+            UART_TX_Char( RXChar );
+            UART_RX_OK = 0; // Clear the flag
+        }
+
         // Wait in for an interrupt (UART or key pressed)
         __bis_SR_register(LPM2_bits + GIE); // Enter LPM2 w/interrupt
         __no_operation();                   // For debugger
-
-        // TODO: sends a char on exit (when button is pressed)
-        UART_TX_Char( RXChar );
-
     } // end while() loop
 
     UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
@@ -58,6 +62,8 @@ void Mode2(void)
     char str_Mode[] = "Mode 2: GPU echo: <STX> <PLD> <ETX> <BCC>\n";
     UART_TX_Data(str_Mode, strlen(str_Mode));
 
+    GPU_RX_OK = 0;
+
     LEDsOff();
     LED_On( LED2 );
 
@@ -65,12 +71,14 @@ void Mode2(void)
 
     while( mode == MODE_2 )
     {
+        if( UART_RX_OK == 1) { GPU_Rx( RXChar ); }
+
         if( GPU_RX_OK == 1 )
         {
             GPU_Check();
             GPU_Process();
             GPU_Tx();
-            GPU_RX_OK = 0;
+            GPU_RX_OK = 0; // Clear the flag
         }
         // Wait in LPM2 after every character received
         __bis_SR_register(LPM2_bits + GIE); // Enter LPM2 w/interrupt
