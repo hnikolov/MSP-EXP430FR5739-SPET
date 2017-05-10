@@ -13,8 +13,11 @@
 #define MODE_3             3
 #define MODE_4             4
 #define MODE_5             5
+#define MODE_6             6
+#define MODE_7             7
+#define MODE_8             8
 #define NOT_VALID         15
-#define LAST_MODE         MODE_5
+#define LAST_MODE         MODE_8
 
 // Pin Definitions
 #define ACC_PWR_PIN       BIT7

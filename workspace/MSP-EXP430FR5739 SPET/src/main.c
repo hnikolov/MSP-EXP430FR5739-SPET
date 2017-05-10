@@ -46,7 +46,7 @@
 #include "APPLICATION.h"
 #include "GPU.h"
 
-const unsigned char LED_Menu[] = {0x80,0xC0,0xE0,0xF0,0xF8};
+const unsigned char LED_Menu[] = {0x80,0xC0,0xE0,0xF0,0xF8,0xFC,0xFE,0xFF};
 // These global variables are used in the ISRs and in FR_EXP.c
 volatile unsigned char mode           = NO_MODE;
 volatile unsigned char UserInput      = 0;
@@ -83,6 +83,7 @@ void main(void)
             case MODE_5:   Mode5();  break;
 
             default:                    // This is not a valid mode (Switch S2 was pressed w/o mode select)
+                LEDsOff();
                 while( UserInput == 0 ) // Blink LED1 to indicate invalid entry
                 {
                     LED_Toggle( LED1 );
@@ -115,7 +116,7 @@ __interrupt void Port_4(void)
             PJOUT          =  LED_Menu[SwitchCounter];
             SwitchCounter++;
 
-            if( SwitchCounter > 4 )
+            if( SwitchCounter >= LAST_MODE )
             {
                 SwitchCounter  = 0;
                 Switch1Pressed = 1;
