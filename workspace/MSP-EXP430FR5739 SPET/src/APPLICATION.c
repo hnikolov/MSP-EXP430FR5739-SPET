@@ -202,6 +202,8 @@ void Mode5(void)
     LedSequence( 2 );
     LED_On( LED5 );
 
+    TxByte = 0xA5;                       // Set a byte to be "send" via a pin
+
     UCA0IE |= UCRXIE;                    // Enable UART RX Interrupt
 
     P1DIR  |= BIT5;                      // P1.5 output
@@ -214,8 +216,8 @@ void Mode5(void)
     TB0CCR2  = KHz_40 >> 1;              // CCR2 50% PWM duty cycle
     TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 
-    // Used to alter modulated output/silence
-    TB2CCR0  = 2500;                     // Represents Bit duration
+    // Used to alter modulated output/silence ("envelop")
+    TB2CCR0  = 2500;                     // Represents Bit duration TODO
     TB2CCTL0 = CCIE;
     TB2CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 
@@ -235,8 +237,6 @@ void Mode5(void)
 
 int getBit()
 {
-    const char TxByte = 0xA5;
-
     static char idx = 7;
     idx++;
     if( idx == 8 ) { idx = 0; } // LSB first

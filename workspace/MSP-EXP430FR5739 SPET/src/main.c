@@ -82,6 +82,9 @@ void main(void)
             case MODE_4:   Mode4();  break;
             case MODE_5:   Mode5();  break;
 
+            case MODE_6:
+            case MODE_7:
+            case MODE_8:
             default:                    // This is not a valid mode (Switch S2 was pressed w/o mode select)
                 LEDsOff();
                 while( UserInput == 0 ) // Blink LED1 to indicate invalid entry

@@ -80,6 +80,9 @@ volatile unsigned char ThreshRange[3]; // TODO
 volatile char RXChar;
 volatile unsigned int UART_RX_OK;
 
+// Used to send data via an output pin
+volatile char TxByte;
+
 
 // Function Declarations
 // TODO: Why extern?
