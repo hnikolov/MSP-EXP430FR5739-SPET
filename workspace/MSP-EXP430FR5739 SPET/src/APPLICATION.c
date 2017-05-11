@@ -17,7 +17,7 @@ extern volatile unsigned int RX_OK;
  *
  * @return none
  *************************************************************************/
-// NOTE: This mode does not work without the debugger and LPM4
+// NOTE: This mode does not work without the debugger and LPM4, so use LPM2
 void Mode1(void)
 {
     char str_Mode[] = "Mode 1: char echo\n";
@@ -34,7 +34,7 @@ void Mode1(void)
     {
         if( UART_RX_OK == 1)
         {
-            UART_TX_Char( RXChar );
+            UART_TX_Char( char_RX );
             UART_RX_OK = 0; // Clear the flag
         }
 
@@ -56,7 +56,7 @@ void Mode1(void)
  *
  * @return none
  *************************************************************************/
-// NOTE: This mode does not work without the debugger and LPM4
+// NOTE: This mode does not work without the debugger and LPM4, so use LPM2
 void Mode2(void)
 {
     char str_Mode[] = "Mode 2: GPU echo: <STX> <PLD> <ETX> <BCC>\n";
@@ -71,7 +71,7 @@ void Mode2(void)
 
     while( mode == MODE_2 )
     {
-        if( UART_RX_OK == 1) { GPU_Rx( RXChar ); }
+        if( UART_RX_OK == 1) { GPU_Rx( char_RX ); }
 
         if( GPU_RX_OK == 1 )
         {
@@ -202,7 +202,7 @@ void Mode5(void)
     LedSequence( 2 );
     LED_On( LED5 );
 
-    TxByte = 0xA5;                       // Set a byte to be "send" via a pin
+    byte_TX = 0xA5;                       // Set a byte to be "send" via a pin
 
     UCA0IE |= UCRXIE;                    // Enable UART RX Interrupt
 
@@ -235,11 +235,65 @@ void Mode5(void)
     LED_Off( LED5 );
 }
 
+/**********************************************************************//**
+ * @brief  Mode 6
+ *
+ * @param  none
+ *
+ * @return none
+ *************************************************************************/
+void Mode6(void)
+{
+    char str_Mode[] = "Mode 6: UART to Pin, modulated @ 40 KHz\n";
+    UART_TX_Data(str_Mode, strlen(str_Mode));
+
+    GPU_RX_OK = 0;
+
+    LEDsOff();
+    LED_On( LED6 );
+
+    UCA0IE |= UCRXIE; // Enable UART RX Interrupt
+
+    while( mode == MODE_6 )
+    {
+        if( UART_RX_OK == 1 )
+        {
+            UART_RX_OK = 0;          // Clear the flag
+            Byte_Tx_IR( char_RX );
+            UART_TX_Char( char_RX ); // Echo back the received char
+        }
+        // Wait in LPM2 after every character received
+        __bis_SR_register(LPM2_bits + GIE); // Enter LPM2 w/interrupt
+        __no_operation();                   // For debugger
+    } // end of while() loop
+
+    UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
+
+    LED_Off( LED6 );
+}
+
 int getBit()
 {
     static char idx = 7;
     idx++;
     if( idx == 8 ) { idx = 0; } // LSB first
 
-    return (TxByte >> idx) & 0x01;
+    return (byte_TX >> idx) & 0x01;
+}
+
+void Byte_Tx_IR( char ch_Byte )
+{
+    byte_TX = ch_Byte;
+
+    enable_Pin_PWM();
+
+    int i=8;
+    while( i > 0 ) // 8 interrupts == 8 bits sent
+    {
+        __bis_SR_register(LPM4_bits);        // Enter LPM4
+        __no_operation();                    // For debugger
+        i--;
+    }
+
+    disable_Pin_PWM();
 }

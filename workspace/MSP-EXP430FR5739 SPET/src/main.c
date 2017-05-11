@@ -81,8 +81,8 @@ void main(void)
             case MODE_3:   Mode3();  break;
             case MODE_4:   Mode4();  break;
             case MODE_5:   Mode5();  break;
+            case MODE_6:   Mode6();  break;
 
-            case MODE_6:
             case MODE_7:
             case MODE_8:
             default:                    // This is not a valid mode (Switch S2 was pressed w/o mode select)
@@ -233,7 +233,7 @@ __interrupt void TIMER2_B0_ISR(void) {
         if( TB0CCR2 > 997 || TB0CCR2 < 3 ) { direction = -direction; }
         TB0CCR2 += direction;
     }
-    else if( mode == MODE_5 )
+    else if( mode == MODE_5 || mode == MODE_6 )
     {
         flag = getBit();
         if( flag == 1 && prev_flag == 0 )      // Bit changes from 0 to 1
@@ -247,6 +247,12 @@ __interrupt void TIMER2_B0_ISR(void) {
             TB0CTL  = 0;                       // Stop the timer
         }
         prev_flag = flag;
+
+        if( mode == MODE_6 )
+        {
+            __bic_SR_register_on_exit(LPM4_bits); // Exit LPM4
+            __no_operation();                     // For debugger
+        }
     }
 }
 
@@ -275,21 +281,19 @@ void __attribute__ ((interrupt(USCI_A0_VECTOR))) USCI_A0_ISR (void)
     {
         case 0:  break;                    // Vector 0 - no interrupt
         case 2:                            // Vector 2 - RXIFG
-            RXChar = UCA0RXBUF;
+            char_RX = UCA0RXBUF;
 
             switch( mode )
             {
-                case MODE_1:   UART_RX_OK = 1;
-                               __bic_SR_register_on_exit(LPM2_bits); // Exit LPM4
-                               __no_operation();                     // For debugger
-                               break;
-                case MODE_2:   UART_RX_OK = 1;
-                               __bic_SR_register_on_exit(LPM2_bits); // Exit LPM4
+                case MODE_1:
+                case MODE_2:
+                case MODE_6:   UART_RX_OK = 1;
+                               __bic_SR_register_on_exit(LPM2_bits); // Exit LPM2
                                __no_operation();                     // For debugger
                                break;
                 case MODE_3:   break;
                 case MODE_4:   break;
-                case MODE_5:   UART_TX_Char( RXChar );  break;        // echo, do not exit LPM
+                case MODE_5:   UART_TX_Char( char_RX );  break;        // echo, do not exit LPM
                 default:       break;
             }
             break;

@@ -77,11 +77,11 @@ extern volatile unsigned char PWM_Flag;
 
 volatile unsigned char ThreshRange[3]; // TODO
 
-volatile char RXChar;
+volatile char char_RX;
 volatile unsigned int UART_RX_OK;
 
 // Used to send data via an output pin
-volatile char TxByte;
+volatile char byte_TX;
 
 
 // Function Declarations
@@ -195,9 +195,37 @@ inline void UART_TX_Data(char *uc_pBuff, unsigned int ui_Size)
     unsigned int i = 0;
     for( i = 0; i < ui_Size; i++ )
     {
-        while (!(UCA0IFG&UCTXIFG));           // USCI_A0 TX buffer ready?
+        while (!(UCA0IFG&UCTXIFG)); // USCI_A0 TX buffer ready?
         UCA0TXBUF = uc_pBuff[i];
     }
+}
+
+// Pin PWM (IR) =================================================================
+inline void enable_Pin_PWM()
+{
+    P1DIR  |=  BIT5;                     // P1.5 output
+    P1SEL0 |=  BIT5;                     // P1.5 options select
+    P1OUT  &= ~BIT5;                     // Set P1.5 to 0 (low) when PWM is stopped
+
+    TB0CCR0  = KHz_40-1;                 // PWM Period = 25 uS @ SMCLK (8MHz)
+
+    TB0CCTL2 = OUTMOD_7;                 // CCR2 7:reset/set; 3:set/reset
+    TB0CCR2  = KHz_40 >> 1;              // CCR2 50% PWM duty cycle
+    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
+
+    // Used to alter modulated output/silence ("envelop")
+    TB2CCR0  = 2500;                     // Represents Bit duration TODO
+    TB2CCTL0 = CCIE;
+    TB2CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
+}
+
+inline void disable_Pin_PWM()
+{
+    P1SEL0  &= ~BIT5;               // Makes P1.5 a regular I/O pin (output set to 0)
+    TB0CTL   = 0;                   // Stop the timer
+
+    TB2CCTL0 = 0;
+    TB2CTL   = 0;
 }
 
 #endif // FR_EXP_INCLUDED

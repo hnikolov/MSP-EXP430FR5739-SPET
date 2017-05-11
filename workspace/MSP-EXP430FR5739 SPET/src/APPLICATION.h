@@ -26,11 +26,13 @@ extern void Mode2(void);
 extern void Mode3(void);
 extern void Mode4(void);
 extern void Mode5(void);
+extern void Mode6(void);
 
 extern void FRAM_Write      (unsigned int StartAddress);
 extern void LEDSequence     (unsigned int DiffValue, unsigned char temp);
 extern void LEDSequenceWrite(unsigned int flag);
 
 extern int getBit();
+void Byte_Tx_IR( char ch_Byte );
 
 #endif // APPLICATION_INCLUDED
