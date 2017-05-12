@@ -209,9 +209,9 @@ inline void enable_Pin_PWM()
 
     TB0CCR0  = KHz_40-1;                 // PWM Period = 25 uS @ SMCLK (8MHz)
 
-    TB0CCTL2 = OUTMOD_7;                 // CCR2 7:reset/set; 3:set/reset
+    TB0CCTL2 = OUTMOD_3;                 // CCR2 7:reset/set; 3:set/reset
     TB0CCR2  = KHz_40 >> 1;              // CCR2 50% PWM duty cycle
-    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
+//    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 
     // Used to alter modulated output/silence ("envelop")
     TB2CCR0  = 2500;                     // Represents Bit duration TODO

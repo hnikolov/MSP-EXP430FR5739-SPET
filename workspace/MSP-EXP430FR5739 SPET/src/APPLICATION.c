@@ -212,7 +212,7 @@ void Mode5(void)
 
     TB0CCR0  = KHz_40-1;                 // PWM Period = 25 uS @ SMCLK (8MHz)
 
-    TB0CCTL2 = OUTMOD_7;                 // CCR2 7:reset/set; 3:set/reset
+    TB0CCTL2 = OUTMOD_3;                 // CCR2 7:reset/set; 3:set/reset
     TB0CCR2  = KHz_40 >> 1;              // CCR2 50% PWM duty cycle
     TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 
@@ -242,6 +242,7 @@ void Mode5(void)
  *
  * @return none
  *************************************************************************/
+// NOTE: Make sure no interrupts occur during the data transmission via the pin
 void Mode6(void)
 {
     char str_Mode[] = "Mode 6: UART to Pin, modulated @ 40 KHz\n";
@@ -272,6 +273,7 @@ void Mode6(void)
     LED_Off( LED6 );
 }
 
+// Called in ISR, TODO: make it inline?
 int getBit()
 {
     static char idx = 7;
@@ -287,13 +289,8 @@ void Byte_Tx_IR( char ch_Byte )
 
     enable_Pin_PWM();
 
-    int i=8;
-    while( i > 0 ) // 8 interrupts == 8 bits sent
-    {
-        __bis_SR_register(LPM4_bits);        // Enter LPM4
-        __no_operation();                    // For debugger
-        i--;
-    }
+    __bis_SR_register(LPM2_bits);        // Enter LPM2
+    __no_operation();                    // For debugger
 
     disable_Pin_PWM();
 }
