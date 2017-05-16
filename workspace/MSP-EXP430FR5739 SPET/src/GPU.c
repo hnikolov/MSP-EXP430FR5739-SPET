@@ -8,7 +8,6 @@
 #include "GPU.h"
 #include "FR_EXP.h"
 
-
 static char GPU_Buffer[BUFF_SIZE] = {0};
 static unsigned int nBytes_Rx = 0;
 

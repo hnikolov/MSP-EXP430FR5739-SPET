@@ -130,7 +130,7 @@ __interrupt void Port_4(void)
             {
                 active = 0;
                 mode   = NOT_VALID;
-                __bic_SR_register_on_exit(LPM4_bits); // To exit an active mode
+                __bic_SR_register_on_exit( LPM4_bits ); // To exit an active mode
                 __no_operation();
             }
             break;
@@ -144,7 +144,7 @@ __interrupt void Port_4(void)
             {
                 active = 0;
                 mode   = NOT_VALID;
-                __bic_SR_register_on_exit(LPM4_bits); // To exit an active mode
+                __bic_SR_register_on_exit( LPM4_bits ); // To exit an active mode
                 __no_operation();
             }
             else //{ Switch2Pressed = 1; } // Enter a mode
@@ -161,7 +161,7 @@ __interrupt void Port_4(void)
                 // Reset variables
                 Switch1Pressed = 0;
                 SwitchCounter  = 0;
-                __bic_SR_register_on_exit(LPM4_bits); // Exit LPM4
+                __bic_SR_register_on_exit( LPM4_bits ); // Exit LPM4
                 __no_operation();
             }
             break;
@@ -215,7 +215,6 @@ __interrupt void TIMER0_B0_ISR(void) {
 __interrupt void TIMER1_B0_ISR(void) {
     if( PWM_Flag == 1 )
     {
-//    __bic_SR_register_on_exit( LPM4_bits );
         LED_Toggle( LED3 );
         P2OUT ^= BIT6;
     }
@@ -251,12 +250,12 @@ __interrupt void TIMER2_B0_ISR(void) {
     }
     else if( mode == MODE_6 )
     {
-        if( i == 0 ) // Send 1 Byte
+        if( i == 0 ) // 1 Byte has been sent
         {
             i = 8;
             prev_flag = 0;
-            __bic_SR_register_on_exit(LPM2_bits); // Exit LPM4
-            __no_operation();                     // For debugger
+            __bic_SR_register_on_exit( LPM2_bits ); // Exit LPM4
+            __no_operation();                       // For debugger
         }
         else
         {
@@ -309,7 +308,7 @@ void __attribute__ ((interrupt(USCI_A0_VECTOR))) USCI_A0_ISR (void)
                 case MODE_1:
                 case MODE_2:
                 case MODE_6:   UART_RX_OK = 1;
-                               __bic_SR_register_on_exit(LPM2_bits); // Exit LPM2
+                               __bic_SR_register_on_exit( LPM2_bits ); // Exit LPM2
                                __no_operation();                     // For debugger
                                break;
                 case MODE_3:   break;

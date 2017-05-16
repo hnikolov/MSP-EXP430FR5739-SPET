@@ -34,5 +34,6 @@ extern void LEDSequenceWrite(unsigned int flag);
 
 extern int getBit();
 void Byte_Tx_IR( char ch_Byte );
+void IR_TX_Data(char *uc_pBuff, unsigned int ui_Size);
 
 #endif // APPLICATION_INCLUDED
