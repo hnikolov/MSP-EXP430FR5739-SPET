@@ -45,6 +45,7 @@
 #include "FR_EXP.h"
 #include "APPLICATION.h"
 #include "GPU.h"
+#include "BPM.h"
 
 const unsigned char LED_Menu[] = {0x80,0xC0,0xE0,0xF0,0xF8,0xFC,0xFE,0xFF};
 // These global variables are used in the ISRs and in FR_EXP.c
@@ -201,16 +202,15 @@ __interrupt void Timer1_A0_ISR(void)
    EnableSwitches();
 }
 
-// Timer TB0x0 interrupt service routine (enable timer 1)
+// Timer TB0x0 interrupt service routine (enable timer 1), Mode 3
 #pragma vector = TIMER0_B0_VECTOR
 __interrupt void TIMER0_B0_ISR(void) {
-//    __bic_SR_register_on_exit( LPM4_bits );
     PWM_Flag ^= 0x01;
     LED_Off( LED3 );
     P2OUT &= ~BIT6;
 }
 
-// Timer TB1x0 interrupt service routine
+// Timer TB1x0 interrupt service routine, Mode 3
 #pragma vector = TIMER1_B0_VECTOR
 __interrupt void TIMER1_B0_ISR(void) {
     if( PWM_Flag == 1 )
@@ -224,7 +224,7 @@ __interrupt void TIMER1_B0_ISR(void) {
 int direction = 2;
 int flag      = 0;
 int prev_flag = 0; // To detect data transition
-int i         = 8; // count the bits
+int bc        = 8; // Counts the bits
 
 #pragma vector = TIMER2_B0_VECTOR
 __interrupt void TIMER2_B0_ISR(void) {
@@ -250,10 +250,14 @@ __interrupt void TIMER2_B0_ISR(void) {
     }
     else if( mode == MODE_6 )
     {
-        if( i == 0 ) // 1 Byte has been sent
+        if( bc == 0 ) // 1 Byte has been sent
         {
-            i = 8;
-            prev_flag = 0;
+            bc        =  8;
+            // TODO: for 0x80 or 0x01
+            //P1SEL0   &= ~BIT5;                    // Makes P1.5 a regular I/O pin (output set to 0)
+            //TB0CTL    =  0;                       // Stop the timer
+            prev_flag =  0;
+
             __bic_SR_register_on_exit( LPM2_bits ); // Exit LPM4
             __no_operation();                       // For debugger
         }
@@ -271,7 +275,7 @@ __interrupt void TIMER2_B0_ISR(void) {
                 TB0CTL  = 0;                       // Stop the timer
             }
             prev_flag = flag;
-            i--;
+            bc--;
         }
     }
 }

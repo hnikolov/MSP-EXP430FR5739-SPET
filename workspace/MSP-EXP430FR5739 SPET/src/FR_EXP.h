@@ -54,6 +54,7 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 #define UART_BRS 0x49
 #define UART_OS16   1
 
+// TODO: CHECK THE 40KHz constant!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO: Define constants for 8MHz SMCLK (8MHz)
 // 7.95 / uS (measured)
 // 40KHz carrier = 25uS; constant = 200 @ 8MHz
@@ -77,12 +78,13 @@ extern volatile unsigned char PWM_Flag;
 
 volatile unsigned char ThreshRange[3]; // TODO
 
+// UART
 volatile char char_RX;
 volatile unsigned int UART_RX_OK;
 
 // Used to send data via an output pin
 volatile char byte_TX;
-
+volatile static char BPM_Buffer[8] = {0};
 
 // Function Declarations
 // TODO: Why extern?

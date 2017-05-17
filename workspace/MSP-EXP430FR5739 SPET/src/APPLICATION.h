@@ -32,8 +32,4 @@ extern void FRAM_Write      (unsigned int StartAddress);
 extern void LEDSequence     (unsigned int DiffValue, unsigned char temp);
 extern void LEDSequenceWrite(unsigned int flag);
 
-extern int getBit();
-void Byte_Tx_IR( char ch_Byte );
-void IR_TX_Data(char *uc_pBuff, unsigned int ui_Size);
-
 #endif // APPLICATION_INCLUDED

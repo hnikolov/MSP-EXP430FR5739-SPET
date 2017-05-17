@@ -5,10 +5,10 @@
  ******************************************************************************/
 #include "APPLICATION.h"
 #include "FR_EXP.h"
-#include <string.h>
 #include "GPU.h"
+#include "BPM.h"
 
-static char BPM_Buffer[8] = {0};
+#include <string.h>
 
 /**********************************************************************//**
  * @brief  Mode 1
@@ -277,45 +277,4 @@ void Mode6(void)
     UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
 
     LED_Off( LED6 );
-}
-
-// TODO: To be moved to BPM.c/h files
-
-// Called in ISR, TODO: make it inline?
-int getBit()
-{
-    static char idx = 7;
-    idx++;
-    if( idx == 8 ) { idx = 0; } // LSB first
-
-    return (byte_TX >> idx) & 0x01;
-}
-
-void Byte_Tx_IR( char ch_Byte )
-{
-    // TODO: UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt?
-    byte_TX = ch_Byte;
-
-    enable_Pin_PWM();
-
-    __bis_SR_register( LPM2_bits );      // Enter LPM2
-    __no_operation();                    // For debugger
-
-    disable_Pin_PWM();
-    // TODO: UCA0IE |= UCRXIE; // Enable UART RX Interrupt?
-}
-
-// Note: Valid ui_Size has to be checked before the call
-void IR_TX_Data(char *uc_pBuff, unsigned int ui_Size)
-{
-    enable_Pin_PWM();
-
-    unsigned int i = 0;
-    for( i = 0; i < ui_Size; i++ )
-    {
-        byte_TX = uc_pBuff[i];
-        __bis_SR_register( LPM2_bits );      // Enter LPM2
-        __no_operation();
-    }
-    disable_Pin_PWM();
 }
