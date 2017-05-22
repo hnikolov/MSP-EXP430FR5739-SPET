@@ -261,6 +261,7 @@ void Mode6(void)
         {
             UART_RX_OK = 0;          // Clear the flag
 /*
+            byte_c = 1;
             Byte_Tx_IR( char_RX );
 /*/
             BPM_Buffer[0] = char_RX;

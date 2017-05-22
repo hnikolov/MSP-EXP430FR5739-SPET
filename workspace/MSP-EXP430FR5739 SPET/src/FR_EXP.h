@@ -85,6 +85,7 @@ volatile unsigned int UART_RX_OK;
 // Used to send data via an output pin
 volatile char byte_TX;
 volatile static char BPM_Buffer[8] = {0};
+volatile int byte_c; // Byte Counter
 
 // Function Declarations
 // TODO: Why extern?
@@ -205,9 +206,9 @@ inline void UART_TX_Data(char *uc_pBuff, unsigned int ui_Size)
 // Pin PWM (IR) =================================================================
 inline void enable_Pin_PWM()
 {
-    P1DIR  |=  BIT5;                     // P1.5 output
-    P1SEL0 |=  BIT5;                     // P1.5 options select
     P1OUT  &= ~BIT5;                     // Set P1.5 to 0 (low) when PWM is stopped
+//    P1DIR  |=  BIT5;                     // P1.5 output
+    P1SEL0 |=  BIT5;                     // P1.5 options select
 
     TB0CCR0  = KHz_40-1;                 // PWM Period = 25 uS @ SMCLK (8MHz)
 
@@ -223,7 +224,8 @@ inline void enable_Pin_PWM()
 
 inline void disable_Pin_PWM()
 {
-    P1SEL0  &= ~BIT5;               // Makes P1.5 a regular I/O pin (output set to 0)
+    P1SEL0  &= ~BIT5;               // Makes P1.5 a regular I/O pin
+    P1DIR   &= ~BIT5;               // P1.5 input (Note: To avoid 'parasitic' output)
     TB0CTL   = 0;                   // Stop the timer
 
     TB2CCTL0 = 0;

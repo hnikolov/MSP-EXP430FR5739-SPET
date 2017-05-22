@@ -224,7 +224,8 @@ __interrupt void TIMER1_B0_ISR(void) {
 int direction = 2;
 int flag      = 0;
 int prev_flag = 0; // To detect data transition
-int bc        = 8; // Counts the bits
+// TODO: make it a global variable, to be set by the send Function for multi-byte transmission
+int bit_c     = 8; // Counts the bits
 
 #pragma vector = TIMER2_B0_VECTOR
 __interrupt void TIMER2_B0_ISR(void) {
@@ -250,32 +251,40 @@ __interrupt void TIMER2_B0_ISR(void) {
     }
     else if( mode == MODE_6 )
     {
-        if( bc == 0 ) // 1 Byte has been sent
+        // Note: Make sure the byte_c (Byte Counter) is set before enabling the transmission
+        if( bit_c == 0 ) // 1 Byte has been sent
         {
-            bc        =  8;
-            // TODO: for 0x80 or 0x01
-            //P1SEL0   &= ~BIT5;                    // Makes P1.5 a regular I/O pin (output set to 0)
-            //TB0CTL    =  0;                       // Stop the timer
-            prev_flag =  0;
-
+            bit_c = 8;
+            byte_c--;
             __bic_SR_register_on_exit( LPM2_bits ); // Exit LPM4
             __no_operation();                       // For debugger
+        }
+
+        if( byte_c == 0 )
+        {
+            // NOTE: Commented because done in disable_Pin_PWM()
+//            P1SEL0   &= ~BIT5;                      // Makes P1.5 a regular I/O pin (output set to 0)
+//            P1DIR    &= ~BIT5;                      // P1.5 input (Note: To avoid 'parasitic' output)
+//            TB0CTL    =  0;                         // Stop the timer
+            prev_flag =  0;
         }
         else
         {
             flag = getBit();
-            if( flag == 1 && prev_flag == 0 )      // Bit changes from 0 to 1 - enable PWM output
+            if( flag == 1 && prev_flag == 0 )       // Bit changes from 0 to 1 - enable PWM output
             {
-                P1SEL0 |= BIT5;                    // Timer output selected
-                TB0CTL  = TBSSEL_2 + MC_1 + TBCLR; // SMCLK (8MHz), up mode, clear TAR
+                P1SEL0 |= BIT5;                     // Timer output selected
+                P1DIR  |= BIT5;                     // P1.5 output
+                TB0CTL  = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
             }
-            else if( flag == 0 && prev_flag == 1 ) // Bit changes from 1 to 0 - disable PWM output
+            else if( flag == 0 && prev_flag == 1 )  // Bit changes from 1 to 0 - disable PWM output
             {
-                P1SEL0 &= ~BIT5;                   // Makes P1.5 a regular I/O pin (output set to 0)
-                TB0CTL  = 0;                       // Stop the timer
+                P1SEL0 &= ~BIT5;                    // Makes P1.5 a regular I/O pin (output set to 0)
+                P1DIR  &= ~BIT5;                    // P1.5 input (Note: To avoid 'parasitic' output)
+                TB0CTL  = 0;                        // Stop the timer
             }
             prev_flag = flag;
-            bc--;
+            bit_c--;
         }
     }
 }
