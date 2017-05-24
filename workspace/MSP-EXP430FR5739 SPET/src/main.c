@@ -249,7 +249,7 @@ __interrupt void TIMER2_B0_ISR(void) {
         }
         prev_flag = flag;
     }
-    else if( mode == MODE_6 )
+    else if( mode == MODE_6 || mode == MODE_2 )
     {
         // Note: Make sure the byte_c (Byte Counter) is set before enabling the transmission
         if( bit_c == 0 ) // 1 Byte has been sent

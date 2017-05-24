@@ -22,6 +22,7 @@ void Byte_Tx_IR( char ch_Byte )
 // Note: Valid ui_Size has to be checked before the call
 void IR_TX_Data( volatile char *uc_pBuff, unsigned int ui_Size )
 {
+    // TODO: Send preamble, start, and stop bits; consider odd parity as well
     byte_c = ui_Size; // Number of bits to be sent
 
     enable_Pin_PWM();

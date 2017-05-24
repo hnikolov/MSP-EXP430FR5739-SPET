@@ -7,6 +7,7 @@
  ******************************************************************************/
 #include "GPU.h"
 #include "FR_EXP.h"
+#include "BPM.h"
 
 static char GPU_Buffer[BUFF_SIZE] = {0};
 static unsigned int nBytes_Rx = 0;
@@ -100,5 +101,6 @@ int GPU_Check()
 int GPU_Process()
 {
     // Prepare and send packet via IR
+    IR_TX_Data(GPU_Buffer, nBytes_Rx);
     return 1;
 }

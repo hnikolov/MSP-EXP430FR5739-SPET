@@ -110,7 +110,7 @@ void Mode3(void)
     // Timer 0: envelop
     TB0CCTL0 = CCIE;                    // TBCCR0 interrupt enabled
     TB0CCR0  = SECONDS_1;               // CCR0: Period
-    TB0CTL   = TBSSEL_1 + MC_1;         // ACLK, up mode
+    TB0CTL   = TBSSEL_1 + MC_1;         // ACLK (10KHz), up mode
 
     __bis_SR_register(LPM4_bits + GIE); // Enter LPM4, enable interrupts
     __no_operation();
@@ -217,7 +217,7 @@ void Mode5(void)
     TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 
     // Used to alter modulated output/silence ("envelop")
-    TB2CCR0  = 2500;                     // Represents Bit duration TODO
+    TB2CCR0  = T_2400_BAUD;              // Represents Bit duration 416 uS @ 8MHz, 2400 baudrate
     TB2CCTL0 = CCIE;
     TB2CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 
@@ -248,7 +248,7 @@ void Mode6(void)
     char str_Mode[] = "Mode 6: UART to Pin, modulated @ 40 KHz\n";
     UART_TX_Data(str_Mode, strlen(str_Mode));
 
-    GPU_RX_OK = 0;
+    UART_RX_OK = 0;
 
     LEDsOff();
     LED_On( LED6 );

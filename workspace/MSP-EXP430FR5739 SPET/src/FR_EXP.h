@@ -54,12 +54,16 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 #define UART_BRS 0x49
 #define UART_OS16   1
 
-// TODO: CHECK THE 40KHz constant!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 // TODO: Define constants for 8MHz SMCLK (8MHz)
 // 7.95 / uS (measured)
 // 40KHz carrier = 25uS; constant = 200 @ 8MHz
 #define MICROSECONDS_25 199
 #define KHz_40 199
+
+// Bit time @ baudrate 2400
+// T = 416 us
+#define T_2400_BAUD 3307
+#define HALF_T_2400_BAUD (T_2400_BAUD / 2)
 
 // 8.3 / millisecond (7.84?) @ ALKC = VLO (10KHz)
 #define MILLISECONDS_30   249
@@ -217,7 +221,7 @@ inline void enable_Pin_PWM()
 //    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 
     // Used to alter modulated output/silence ("envelop")
-    TB2CCR0  = 2500;                     // Represents Bit duration TODO
+    TB2CCR0  = T_2400_BAUD;              // Represents Bit duration 416 uS @ 8MHz, 2400 baudrate
     TB2CCTL0 = CCIE;
     TB2CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 }
