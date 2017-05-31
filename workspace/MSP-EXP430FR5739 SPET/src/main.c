@@ -226,6 +226,12 @@ int flag      = 0;
 int prev_flag = 0; // To detect data transition
 // TODO: make it a global variable, to be set by the send Function for multi-byte transmission
 int bit_c     = 8; // Counts the bits
+int toggle    = 0; // used to switch on/off the PWM output
+int previous  = 0; // used to switch on/off the PWM output
+
+#define half_1 0
+#define half_2 1
+int half      = half_1; // Determines the 2 halves of a bit
 
 #pragma vector = TIMER2_B0_VECTOR
 __interrupt void TIMER2_B0_ISR(void) {
@@ -249,14 +255,14 @@ __interrupt void TIMER2_B0_ISR(void) {
         }
         prev_flag = flag;
     }
-    else if( mode == MODE_6 || mode == MODE_2 )
+    else if( mode == MODE_7 ) // NOTE: SKIP THIS FOR NOW
     {
         // Note: Make sure the byte_c (Byte Counter) is set before enabling the transmission
         if( bit_c == 0 ) // 1 Byte has been sent
         {
             bit_c = 8;
             byte_c--;
-            __bic_SR_register_on_exit( LPM2_bits ); // Exit LPM4
+            __bic_SR_register_on_exit( LPM2_bits ); // Exit LPM2
             __no_operation();                       // For debugger
         }
 
@@ -285,6 +291,57 @@ __interrupt void TIMER2_B0_ISR(void) {
             }
             prev_flag = flag;
             bit_c--;
+        }
+    }
+    else if( mode == MODE_6 || mode == MODE_2 )
+    {
+        // Note: Make sure the byte_c (Byte Counter) is set before enabling the transmission
+        if( bit_c == 0 ) // 1 Byte has been sent
+        {
+            bit_c = 8;
+            byte_c--;
+            __bic_SR_register_on_exit( LPM2_bits ); // Exit LPM2
+            __no_operation();                       // For debugger
+        }
+
+        if( byte_c == 0 )
+        {
+            // TODO: DO WE NEED THIS???
+            toggle = 1;
+            half   = half_1;
+        }
+        else
+        {
+            if( half == half_1 )
+            {
+                half   = half_2;
+                toggle = 1;                              // Always toggle the signal at the beginning of a bit
+            }
+            else // half == half_2
+            {
+                half = half_1;
+                if( getBit() == 1 ) { toggle = 1; }      // toggle again in the middle if bit is 1
+                else                { toggle = 0; }      // do not toggle if bit is 0
+                bit_c--;                                 // end of bit
+            }
+
+            if( toggle == 1 )
+            {
+                if( previous == 1 ) // disable PWM
+                {
+                    previous = 0;
+                    P1SEL0  &= ~BIT5;                    // Makes P1.5 a regular I/O pin (output set to 0)
+                    P1DIR   &= ~BIT5;                    // P1.5 input (Note: To avoid 'parasitic' output)
+                    TB0CTL   = 0;                        // Stop the timer
+                }
+                else // previous == 0 - enable PWM
+                {
+                    previous = 1;
+                    P1SEL0  |= BIT5;                     // Timer output selected
+                    P1DIR   |= BIT5;                     // P1.5 output
+                    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
+                }
+            }
         }
     }
 }

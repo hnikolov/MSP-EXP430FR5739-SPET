@@ -221,7 +221,7 @@ inline void enable_Pin_PWM()
 //    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 
     // Used to alter modulated output/silence ("envelop")
-    TB2CCR0  = T_2400_BAUD;              // Represents Bit duration 416 uS @ 8MHz, 2400 baudrate
+    TB2CCR0  = HALF_T_2400_BAUD;              // Represents half Bit duration 416/2 uS @ 8MHz, 2400 baudrate
     TB2CCTL0 = CCIE;
     TB2CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 }
