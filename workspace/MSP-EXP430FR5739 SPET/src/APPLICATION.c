@@ -63,6 +63,7 @@ void Mode2(void)
     UART_TX_Data(str_Mode, strlen(str_Mode));
 
     GPU_RX_OK = 0;
+    idx = 7;
 
     LEDsOff();
     LED_On( LED2 );
@@ -250,6 +251,8 @@ void Mode6(void)
 
     UART_RX_OK = 0;
 
+    idx = 7;
+
     LEDsOff();
     LED_On( LED6 );
 
@@ -267,6 +270,10 @@ void Mode6(void)
             BPM_Buffer[0] = char_RX;
             BPM_Buffer[1] = char_RX;
             IR_TX_Data( BPM_Buffer, 2 );
+
+//            sendBits(0x01, 1);
+//            sendBits(0x01, 1);
+//            sendBits(0x01, 1);
 //*/
             UART_TX_Char( char_RX ); // Echo back the received char
         }

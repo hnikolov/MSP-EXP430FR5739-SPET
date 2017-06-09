@@ -90,6 +90,7 @@ volatile unsigned int UART_RX_OK;
 volatile char byte_TX;
 volatile static char BPM_Buffer[8] = {0};
 volatile int byte_c; // Byte Counter
+volatile int bit_c;  // Bit  Counter
 
 // Function Declarations
 // TODO: Why extern?

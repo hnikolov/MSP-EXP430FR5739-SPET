@@ -23,16 +23,28 @@ void Byte_Tx_IR( char ch_Byte )
 void IR_TX_Data( volatile char *uc_pBuff, unsigned int ui_Size )
 {
     // TODO: Send preamble, start, and stop bits; consider odd parity as well
-    byte_c = ui_Size; // Number of bits to be sent
+    byte_c = ui_Size; // Number of bytes to be sent
 
     enable_Pin_PWM();
+
+//    sendBits(0x03, 3); // Preamble
+//    __bis_SR_register( LPM2_bits );      // Enter LPM2
+//    __no_operation();
 
     unsigned int i = 0;
     for( i = 0; i < ui_Size; i++ )
     {
+//        sendBits(0x01, 1); // Start
+//        __bis_SR_register( LPM2_bits );      // Enter LPM2
+//        __no_operation();
+
         byte_TX = uc_pBuff[i];
         __bis_SR_register( LPM2_bits );      // Enter LPM2
         __no_operation();
+
+//        sendBits(0x00, 1); // Stop
+//        __bis_SR_register( LPM2_bits );      // Enter LPM2
+//        __no_operation();
     }
     disable_Pin_PWM();
 }

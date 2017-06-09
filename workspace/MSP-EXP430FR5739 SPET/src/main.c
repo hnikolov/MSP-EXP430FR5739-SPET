@@ -70,6 +70,9 @@ void main(void)
         active         = 0;
         Switch2Pressed = 0;
 
+        bit_c = 8;
+        idx   = 7; // Bit index, used by getBit()
+
         // Wait in LPM4 for user input
         __bis_SR_register(LPM4_bits + GIE); // Enter LPM4 w/interrupt
         __no_operation();			        // For debugger
@@ -225,7 +228,7 @@ int direction = 2;
 int flag      = 0;
 int prev_flag = 0; // To detect data transition
 // TODO: make it a global variable, to be set by the send Function for multi-byte transmission
-int bit_c     = 8; // Counts the bits
+//int bit_c     = 8; // Counts the bits
 int toggle    = 0; // used to switch on/off the PWM output
 int previous  = 0; // used to switch on/off the PWM output
 
@@ -309,6 +312,8 @@ __interrupt void TIMER2_B0_ISR(void) {
             // TODO: DO WE NEED THIS???
             toggle = 1;
             half   = half_1;
+            // NOTE: Do we need this?
+            previous = 0; // Every new transmission starts with enabling PWM
         }
         else
         {
