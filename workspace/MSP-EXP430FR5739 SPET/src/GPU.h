@@ -4,10 +4,10 @@
 #ifndef GPU_INCLUDED
 #define GPU_INCLUDED
 
-
+// Odd parity included
 #define STX (0x02)
-#define ETX (0x03)
-#define ACK (0x06)
+#define ETX (0x83)
+#define ACK (0x86)
 
 #define BUFF_SIZE 128
 
