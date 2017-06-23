@@ -23,21 +23,25 @@ inline int getBit()
 // Used to send 1 to 7 bits (LSB first)
 inline void sendBits( char ch_Value, unsigned int num_Bits )
 {
+    // Store current byte count
+    int temp_byte_c = byte_c;
+
     byte_c  = 1;
     bit_c   = num_Bits;
     byte_TX = ch_Value;
 
     idx = 7; // used by getBit()
 
-    enable_Pin_PWM(); // TODO
+//    enable_Pin_PWM(); // TODO: Probably we can use it
 
     __bis_SR_register( LPM2_bits );      // Enter LPM2
     __no_operation();
 
-    disable_Pin_PWM(); // TODO
+//    disable_Pin_PWM(); // TODO
 
-    bit_c = 8; // Restore the default value of the bit counter (done at ISR end as well)
-    idx   = 7; // used by getBit()
+    bit_c  = 8; // Restore the default value of the bit counter (done at ISR end as well)
+    idx    = 7; // used by getBit()
+    byte_c = temp_byte_c; // Restore byte count
 }
 
 #endif // BPM_INCLUDED

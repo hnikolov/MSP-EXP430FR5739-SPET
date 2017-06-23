@@ -269,7 +269,8 @@ void Mode6(void)
 /*/
             BPM_Buffer[0] = char_RX;
             BPM_Buffer[1] = char_RX;
-            IR_TX_Data( BPM_Buffer, 2 );
+            BPM_Buffer[2] = char_RX;
+            IR_TX_Data( BPM_Buffer, 3 );
 
 //            sendBits(0x01, 1);
 //            sendBits(0x01, 1);

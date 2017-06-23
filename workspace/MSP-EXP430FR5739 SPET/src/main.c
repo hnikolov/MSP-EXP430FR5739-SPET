@@ -310,10 +310,10 @@ __interrupt void TIMER2_B0_ISR(void) {
         if( byte_c == 0 )
         {
             // TODO: DO WE NEED THIS???
-            toggle = 1;
+            //toggle = 1;
             half   = half_1;
             // NOTE: Do we need this?
-            previous = 0; // Every new transmission starts with enabling PWM
+            //previous = 0; // Every new transmission starts with enabling PWM // TODO
         }
         else
         {

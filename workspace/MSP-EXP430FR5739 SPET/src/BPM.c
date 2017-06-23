@@ -27,24 +27,22 @@ void IR_TX_Data( volatile char *uc_pBuff, unsigned int ui_Size )
 
     enable_Pin_PWM();
 
-//    sendBits(0x03, 3); // Preamble
-//    __bis_SR_register( LPM2_bits );      // Enter LPM2
-//    __no_operation();
+    sendBits(0x07, 3); // TODO Preamble, 24 bits
+
+//    byte_c = ui_Size;
 
     unsigned int i = 0;
     for( i = 0; i < ui_Size; i++ )
     {
-//        sendBits(0x01, 1); // Start
-//        __bis_SR_register( LPM2_bits );      // Enter LPM2
-//        __no_operation();
+        sendBits(0x00, 1); // Start
 
         byte_TX = uc_pBuff[i];
         __bis_SR_register( LPM2_bits );      // Enter LPM2
         __no_operation();
 
-//        sendBits(0x00, 1); // Stop
-//        __bis_SR_register( LPM2_bits );      // Enter LPM2
-//        __no_operation();
+        sendBits(0x01, 1); // Stop
     }
+    sendBits(0x01, 1); // Frame Stop Bit
+
     disable_Pin_PWM();
 }
