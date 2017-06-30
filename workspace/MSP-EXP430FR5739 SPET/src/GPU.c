@@ -3,6 +3,7 @@
  * <PLD> can be zero or several characters
  * Payload length determined by <ETX> (0x03)
  * BCC = XOR ( <PLD> <ETX> ); 7 bits
+ * MSB is an Odd parity bit
  *
  ******************************************************************************/
 #include "GPU.h"
@@ -10,7 +11,7 @@
 #include "BPM.h"
 
 static char GPU_Buffer[BUFF_SIZE] = {0};
-static unsigned int nBytes_Rx = 0;
+static unsigned int nBytes_Rx     =  0;
 
 typedef enum
 {
@@ -65,24 +66,36 @@ void GPU_Rx( char input )
  * according to ANSI standard X3.28 - 1976. BCC is initialized to 0.
  * STX is excluded; ETX is included.
  * The BCC is also called the 'horizontal parity check'.
+ * MSB is an Odd parity bit
  **************************************************************************/
 char GPU_Calculate_BCC(char* pc_Buff, unsigned int ui_Size)
 {
     char          c_BCC = 0;
     unsigned int  i     = 0;
 
-    // Exclude <STX> and <BCC>
-    for( i=1; i<ui_Size-1; i++ ) { c_BCC ^= pc_Buff[i]; }
+    // Exclude <STX> and <BCC> bytes
+    for( i = 1; i < ui_Size-1; i++ ) { c_BCC ^= pc_Buff[i]; }
 
-    return c_BCC & 0x7f; // return 7 bits
+    // Make the calculated BCC Odd-parity
+    return GPU_Calculate_OddParity( c_BCC );
 }
 
-// Send back the received GPU message
-void GPU_Tx()
+char GPU_Calculate_OddParity( char c_Byte )
 {
-    UART_TX_Char('\n');
-    UART_TX_Data(GPU_Buffer, nBytes_Rx);
-    UART_TX_Char('\n');
+    unsigned char uc_NumOnce = 0;
+    unsigned int  i          = 0;
+
+    // TODO: To be checked
+    for( i = 7; i <= 0; i-- ) // SKIP MSBit
+//    for( i = 0; i < 7; i++ ) // SKIP MSBit
+    {
+        if( (c_Byte >> i) & 0x01 == 1 ) { uc_NumOnce++; }
+    }
+
+    if( (uc_NumOnce & 0x01) == 0 ) { c_Byte |= 0x80; } // Set   MSBit if even #1s
+    else                           { c_Byte &= 0x7F; } // Clear MSBit if odd  #1s
+
+    return c_Byte;
 }
 
 int GPU_Check()
@@ -103,4 +116,11 @@ int GPU_Process()
     // Prepare and send packet via IR
     IR_TX_Data(GPU_Buffer, nBytes_Rx);
     return 1;
+}
+
+// Send back the received GPU message
+void GPU_Tx()
+{
+    UART_TX_Data(GPU_Buffer, nBytes_Rx);
+    UART_TX_Char('\n'); // Needed by the Bluetooth manager
 }

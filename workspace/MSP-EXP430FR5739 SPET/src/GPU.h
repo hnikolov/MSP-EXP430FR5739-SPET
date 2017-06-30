@@ -20,5 +20,6 @@ int  GPU_Check();
 int  GPU_Process();
 
 char GPU_Calculate_BCC(char* pc_Buff, unsigned int ui_Size);
+char GPU_Calculate_OddParity( char c_Byte );
 
 #endif // GPU_INCLUDED
