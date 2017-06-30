@@ -85,9 +85,7 @@ char GPU_Calculate_OddParity( char c_Byte )
     unsigned char uc_NumOnce = 0;
     unsigned int  i          = 0;
 
-    // TODO: To be checked
-    for( i = 7; i <= 0; i-- ) // SKIP MSBit
-//    for( i = 0; i < 7; i++ ) // SKIP MSBit
+    for( i = 6; i <= 0; i-- ) // SKIP MSBit
     {
         if( (c_Byte >> i) & 0x01 == 1 ) { uc_NumOnce++; }
     }
