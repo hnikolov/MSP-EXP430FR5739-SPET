@@ -311,7 +311,6 @@ void Mode7(void)
     UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
 
     //===================================================================
-
     // Configure Port Pins
     P1DIR  &= ~BIT0;                            // P1.0/TA0.1 Input Capture
     P1SEL0 |=  BIT0;                            // TA0.1 option select
@@ -332,66 +331,58 @@ void Mode7(void)
     //==========================================================================
     // Configure the TA0CCR1 to do input capture
     TA0CCTL1 = CAP + CM_3 + CCIE + SCS + CCIS_0;
-                                              // TA0CCR1 Capture mode; CCI1A; Both
-                                              // Rising and Falling Edge; interrupt enable
-    TA0CTL |= TASSEL_2 + MC_2 + TACLR + TAIE;        // SMCLK, Cont Mode; clear timer
+    // TA0CCR1 Capture mode; Both Rising and Falling Edge; Interrupt enable; Synchronized; CCI1A
+
+    TA0CTL |= TASSEL_2 + MC_2 + TACLR + TAIE; // SMCLK, Cont Mode; clear timer, int. enable on roll over
     // TACLR Clear the current timer value as well as the divider and mode
     // ID_3 divide clk by 8
     // TAIE enables the TAIFG interrupt request
-
-    // Variable Initialization
-    Count = 0x0;
-    First_Time = 0x01;
     //===================================================================
 
-    int Period, ON_Period;
-    unsigned char DutyCycle;
+    // Variable Initialization
+    RollBack2Zero = 0;
+    time      = 0;
+    StartTime = 0;
+    EndTime   = 0;
+    start     = 1;
 
-    REdge1 = 0;
-    REdge2 = 0;
-    time   = 0;
-    start  = 1;
+    LEDsOff();
 
     while( mode == MODE_7 )
     {
-        // Wait in LPM2 after every character received
-        __bis_SR_register(LPM0_bits + GIE); // Enter LPM2 w/interrupt
+        __bis_SR_register( LPM2_bits + GIE ); // Enter LPM2 w/interrupt
         __no_operation();                   // For debugger
 
         // On exiting LPM0
+
+        // Debug --------------------------------------
         if (TA0CCTL1 & COV)  { LED_On( LED8 ); } // Check for Capture Overflow
         // clear COV if set (in register TAxCCTLn)
-        if( time <= 0 )      { LED_Toggle( LED2 );   } // Measured time must be > 0
+        if( RollBack2Zero )  { LED_Toggle( LED5 ); } // Check for timer roll back to zero
+        RollBack2Zero = 0;
+        if( time <= 0 )      { LED_Toggle( LED2 ); } // Measured time must be > 0
+        //---------------------------------------------
+
         if( time <= 0 )      { time = 0xFFFF - time; }
 
 //        if( time > 20026 )   { LED_Toggle( LED1 ); }    // 0.125us * 20026 = 2.5ms
 //        if( time < 10000 )   { LED_Toggle( LED7 ); }
 
-        if( time > 1400 )   { LED_Toggle( LED1 ); }    // 0.125us * 1400 = 175us
-        if( time >  400 )   { LED_Toggle( LED7 ); }
+//        if( time > 1400 )   { LED_Toggle( LED1 ); }    // 0.125us * 1400 = 175us
+//        if( time <  400 )   { LED_Toggle( LED7 ); }
 
-/*        LED_Toggle( LED7 );
-
-        LED_Off( LED1 );
-        LED_Off( LED8 );
-
-        if (TA0CCTL1 & COV)                   // Check for Capture Overflow
+        if ((time >= HALF_BIT_TIME_ONE_2400_BAUD_LO_LIM) && (time <= HALF_BIT_TIME_ONE_2400_BAUD_HI_LIM)) // half one detected
         {
-            LED_On( LED1 );
-//            while(1);                         // Loop Forever
+            LED_Toggle( LED1 );
         }
-
-        Period    = REdge2 - REdge1;             // Calculate Period
-        ON_Period = FEdge  - REdge1;             // On period
-
-        if( ON_Period < 0 ) { LED_On( LED8 ); }
-
-//        DutyCycle = ((unsigned long)ON_Period*100/Period);
-        DutyCycle = 25;
-
-        if( DutyCycle != 25 ) { LED_Toggle( LED7 );     }
-        else                  { LED_Toggle( LED7 ); }
-*/
+        if ((time > BIT_TIME_ZERO_2400_BAUD_LO_LIM) && (time <= BIT_TIME_ZERO_2400_BAUD_HI_LIM))          // zero detected
+        {
+            LED_Toggle( LED7 );
+        }
+        if ((time < HALF_BIT_TIME_ONE_2400_BAUD_LO_LIM) || (time > BIT_TIME_ZERO_2400_BAUD_HI_LIM))       // Out of bounds detected
+        {
+            LED_Toggle( LED3 );
+        }
     } // end of while() loop
 
 

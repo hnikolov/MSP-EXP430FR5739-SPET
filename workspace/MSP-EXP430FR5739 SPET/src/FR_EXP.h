@@ -60,10 +60,20 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 #define MICROSECONDS_25 199
 #define KHz_40 199
 
-// Bit time @ baudrate 2400
+//===============================================================
+// Bit time @ baudrate 2400 for 8MHz SMCLK
 // T = 416 us
 #define T_2400_BAUD 3307
 #define HALF_T_2400_BAUD (T_2400_BAUD / 2)
+
+#define NOMINAL_HALF_BIT_TIME_ONE_2400_BAUD (    T_2400_BAUD / 2)
+#define NOMINAL_BIT_TIME_ZERO_2400_BAUD     (    T_2400_BAUD    )
+
+#define HALF_BIT_TIME_ONE_2400_BAUD_LO_LIM  (    T_2400_BAUD / 4)
+#define HALF_BIT_TIME_ONE_2400_BAUD_HI_LIM  (3 * T_2400_BAUD / 4)
+#define BIT_TIME_ZERO_2400_BAUD_LO_LIM      (3 * T_2400_BAUD / 4)
+#define BIT_TIME_ZERO_2400_BAUD_HI_LIM      (6 * T_2400_BAUD / 4)
+//===============================================================
 
 // 8.3 / millisecond (7.84?) @ ALKC = VLO (10KHz)
 #define MILLISECONDS_30   249
@@ -93,11 +103,10 @@ volatile int byte_c; // Byte Counter
 volatile int bit_c;  // Bit  Counter
 
 // TODO: Timer capture variables
-volatile unsigned char Count, First_Time;
-volatile unsigned int REdge1, REdge2, FEdge;
 volatile unsigned int StartTime, EndTime;
 volatile int time;
 volatile int start;
+volatile unsigned char RollBack2Zero;
 
 // Function Declarations
 // TODO: Why extern?

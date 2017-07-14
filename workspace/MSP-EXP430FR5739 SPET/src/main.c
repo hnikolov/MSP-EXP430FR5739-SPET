@@ -199,52 +199,29 @@ __interrupt void TIMER0_A1_ISR (void)
     {
         case  TA0IV_NONE: break;              // Vector  0:  No interrupt
         case  TA0IV_TACCR1:                   // Vector  2:  TACCR1 CCIFG
-
-            if( start == 1 ) // maybe not needed...
+            if( start == 1 )
             {
                 StartTime = TA0CCR1;
-                start = 0;             // set to 1 after receiving of data completes
+                start     = 0;                // set to 1 before start receiving data
             }
             else
             {
                 EndTime = TA0CCR1;
                 time = EndTime - StartTime;
-//                if( time <= 0 ) { time = 0xFFFF - time; } // Roll over to 0 occurred, done in main
+                //time = 0xFFFF * RollBack2Zero + EndTime - StartTime; // Always > 0
                 StartTime = EndTime;
 
-                __bic_SR_register_on_exit( LPM0_bits );  // Exit LPM2 on return to main
+                __bic_SR_register_on_exit( LPM2_bits );  // Exit LPM2 on return to main
                 __no_operation();                        // For debugger
             }
-
-//==================================================
-/*
-//            if (TA0CCTL1 & CCI)               // Pin status, rising edge
-            if( toggle_edge == 0 )
-            {
-                REdge1 = TA0CCR1;
-                time   = REdge1 - REdge2;
-                toggle_edge = 1;
-            }
-            else                              // falling edge
-            {
-                REdge2 = TA0CCR1;
-                time   = REdge2 - REdge1;
-//                PulseCount1 = (0x0000FFFF * (long)OverflowTimes) + (long)EndTime - (long)StartTime;
-                toggle_edge = 0;
-
-                __bic_SR_register_on_exit( LPM2_bits );  // Exit LPM0 on return to main
-                __no_operation();                        // For debugger
-            }
-            // OverflowTimes = 0;
-*/
+// Note:    PulseCount = (0x0000FFFF * (long)RollBack2Zero) + (long)EndTime - (long)StartTime;
             break;
 
         case TA0IV_TACCR2: break;             // Vector  4:  TACCR2 CCIFG
         case TA0IV_6:      break;             // Vector  6:  Reserved CCIFG
 //        case TA0IV_8:      break;             // Vector  8:  Reserved CCIFG
-        case TA0IV_TAIFG:                    // Vector 10:  TAIFG
-            LED_Toggle( LED5 );              // roll over to 0
-//            OverflowTimes++;
+        case TA0IV_TAIFG:                     // Vector 0x0E:  TAIFG
+            RollBack2Zero++;
             break;
         default:           break;
     }
