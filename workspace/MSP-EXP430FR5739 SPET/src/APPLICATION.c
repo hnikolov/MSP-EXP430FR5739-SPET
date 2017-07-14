@@ -316,17 +316,15 @@ void Mode7(void)
     P1SEL0 |=  BIT0;                            // TA0.1 option select
 
     // Configure TA1.1 to output PWM signal
-    // Period = 82/32khz = 2.5ms ~ 400Hz Freq
-    // TODO: ~200 us period
-    P1DIR  |=  BIT5;                     // P1.5/TB0.2 output
-    P1SEL0 |=  BIT5;                     // P1.5 options select
-    P1OUT  &= ~BIT5;                     // Set P1.5 to 0 (low) when PWM is stopped
+    P1DIR  |=  BIT5;                            // P1.5/TB0.2 output
+    P1SEL0 |=  BIT5;                            // P1.5 options select
+    P1OUT  &= ~BIT5;                            // Set P1.5 to 0 (low) when PWM is stopped
 
-    TB0CCR0  = T_2400_BAUD-1;            // PWM Period = 415us
+    TB0CCR0  = T_BAUD-1;                        // PWM Period
 
-    TB0CCTL2 = OUTMOD_7;                 // CCR2 7:reset/set; 3:set/reset
-    TB0CCR2  = HALF_T_2400_BAUD;         // CCR2: PWM duty cycle 50%
-    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // ACLK (), up mode, clear TAR
+    TB0CCTL2 = OUTMOD_7;                        // CCR2 7:reset/set; 3:set/reset
+    TB0CCR2  = HALF_T_BAUD;                     // CCR2: PWM duty cycle 50%
+    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;         // ACLK (), up mode, clear TAR
 
     //==========================================================================
     // Configure the TA0CCR1 to do input capture
@@ -363,26 +361,12 @@ void Mode7(void)
         if( time <= 0 )      { LED_Toggle( LED2 ); } // Measured time must be > 0
         //---------------------------------------------
 
-        if( time <= 0 )      { time = 0xFFFF - time; }
+        if( time <= 0 ) { time = 0xFFFF - time; }
 
-//        if( time > 20026 )   { LED_Toggle( LED1 ); }    // 0.125us * 20026 = 2.5ms
-//        if( time < 10000 )   { LED_Toggle( LED7 ); }
+        if( (time >= HALF_BIT_TIME_ONE_LO_LIM) && (time <= HALF_BIT_TIME_ONE_HI_LIM) ) { LED_Toggle( LED1 ); } // half one
+        if( (time >  BIT_TIME_ZERO_LO_LIM)     && (time <= BIT_TIME_ZERO_HI_LIM)     ) { LED_Toggle( LED7 ); } // zero
+        if( (time <  HALF_BIT_TIME_ONE_LO_LIM) || (time >  BIT_TIME_ZERO_HI_LIM)     ) { LED_Toggle( LED3 ); } // out of bounds
 
-//        if( time > 1400 )   { LED_Toggle( LED1 ); }    // 0.125us * 1400 = 175us
-//        if( time <  400 )   { LED_Toggle( LED7 ); }
-
-        if ((time >= HALF_BIT_TIME_ONE_2400_BAUD_LO_LIM) && (time <= HALF_BIT_TIME_ONE_2400_BAUD_HI_LIM)) // half one detected
-        {
-            LED_Toggle( LED1 );
-        }
-        if ((time > BIT_TIME_ZERO_2400_BAUD_LO_LIM) && (time <= BIT_TIME_ZERO_2400_BAUD_HI_LIM))          // zero detected
-        {
-            LED_Toggle( LED7 );
-        }
-        if ((time < HALF_BIT_TIME_ONE_2400_BAUD_LO_LIM) || (time > BIT_TIME_ZERO_2400_BAUD_HI_LIM))       // Out of bounds detected
-        {
-            LED_Toggle( LED3 );
-        }
     } // end of while() loop
 
 

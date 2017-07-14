@@ -61,18 +61,60 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 #define KHz_40 199
 
 //===============================================================
+// Bit time @ baudrate 1200 for 8MHz SMCLK
+// T = 832 us (6656 but tuned to 6624)
+#define T_1200_BAUD 6624
+#define HALF_T_1200_BAUD (T_1200_BAUD / 2)
+
+#define NOMINAL_HALF_BIT_TIME_ONE_1200_BAUD (     T_1200_BAUD / 2)
+#define NOMINAL_BIT_TIME_ZERO_1200_BAUD     (     T_1200_BAUD    )
+
+#define HALF_BIT_TIME_ONE_1200_BAUD_LO_LIM  (     T_1200_BAUD / 4)
+#define HALF_BIT_TIME_ONE_1200_BAUD_HI_LIM  (3U * T_1200_BAUD / 4)
+#define BIT_TIME_ZERO_1200_BAUD_LO_LIM      (3U * T_1200_BAUD / 4)
+#define BIT_TIME_ZERO_1200_BAUD_HI_LIM      (6U * T_1200_BAUD / 4)
+
+//===============================================================
 // Bit time @ baudrate 2400 for 8MHz SMCLK
-// T = 416 us
-#define T_2400_BAUD 3307
+// T = 416 us (3328 but tuned to 3312)
+#define T_2400_BAUD 3312
 #define HALF_T_2400_BAUD (T_2400_BAUD / 2)
 
-#define NOMINAL_HALF_BIT_TIME_ONE_2400_BAUD (    T_2400_BAUD / 2)
-#define NOMINAL_BIT_TIME_ZERO_2400_BAUD     (    T_2400_BAUD    )
+#define NOMINAL_HALF_BIT_TIME_ONE_2400_BAUD (     T_2400_BAUD / 2)
+#define NOMINAL_BIT_TIME_ZERO_2400_BAUD     (     T_2400_BAUD    )
 
-#define HALF_BIT_TIME_ONE_2400_BAUD_LO_LIM  (    T_2400_BAUD / 4)
-#define HALF_BIT_TIME_ONE_2400_BAUD_HI_LIM  (3 * T_2400_BAUD / 4)
-#define BIT_TIME_ZERO_2400_BAUD_LO_LIM      (3 * T_2400_BAUD / 4)
-#define BIT_TIME_ZERO_2400_BAUD_HI_LIM      (6 * T_2400_BAUD / 4)
+#define HALF_BIT_TIME_ONE_2400_BAUD_LO_LIM  (     T_2400_BAUD / 4)
+#define HALF_BIT_TIME_ONE_2400_BAUD_HI_LIM  (3U * T_2400_BAUD / 4)
+#define BIT_TIME_ZERO_2400_BAUD_LO_LIM      (3U * T_2400_BAUD / 4)
+#define BIT_TIME_ZERO_2400_BAUD_HI_LIM      (6U * T_2400_BAUD / 4)
+
+//===============================================================
+// Bit time @ baudrate 4800 for 8MHz SMCLK
+// T = 208 us (1664 but tuned to 1656)
+#define T_4800_BAUD 1656
+#define HALF_T_4800_BAUD (T_4800_BAUD / 2)
+
+#define NOMINAL_HALF_BIT_TIME_ONE_4800_BAUD (     T_4800_BAUD / 2)
+#define NOMINAL_BIT_TIME_ZERO_4800_BAUD     (     T_4800_BAUD    )
+
+#define HALF_BIT_TIME_ONE_4800_BAUD_LO_LIM  (     T_4800_BAUD / 4)
+#define HALF_BIT_TIME_ONE_4800_BAUD_HI_LIM  (3U * T_4800_BAUD / 4)
+#define BIT_TIME_ZERO_4800_BAUD_LO_LIM      (3U * T_4800_BAUD / 4)
+#define BIT_TIME_ZERO_4800_BAUD_HI_LIM      (6U * T_4800_BAUD / 4)
+
+//===============================================================
+// Set the proper constants to be used
+//===============================================================
+#define T_BAUD                       T_1200_BAUD
+#define HALF_T_BAUD                 (     T_BAUD / 2)
+
+#define NOMINAL_HALF_BIT_TIME_ONE   (     T_BAUD / 2)
+#define NOMINAL_BIT_TIME_ZERO       (     T_BAUD    )
+
+#define HALF_BIT_TIME_ONE_LO_LIM    (     T_BAUD / 4)
+#define HALF_BIT_TIME_ONE_HI_LIM    (3U * T_BAUD / 4)
+#define BIT_TIME_ZERO_LO_LIM        (3U * T_BAUD / 4)
+#define BIT_TIME_ZERO_HI_LIM        (6U * T_BAUD / 4)
 //===============================================================
 
 // 8.3 / millisecond (7.84?) @ ALKC = VLO (10KHz)
