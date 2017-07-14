@@ -92,6 +92,13 @@ volatile static char BPM_Buffer[8] = {0};
 volatile int byte_c; // Byte Counter
 volatile int bit_c;  // Bit  Counter
 
+// TODO: Timer capture variables
+volatile unsigned char Count, First_Time;
+volatile unsigned int REdge1, REdge2, FEdge;
+volatile unsigned int StartTime, EndTime;
+volatile int time;
+volatile int start;
+
 // Function Declarations
 // TODO: Why extern?
 extern void Init_System(void);

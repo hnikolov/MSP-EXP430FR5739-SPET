@@ -63,7 +63,7 @@ void main(void)
     WDTCTL = WDTPW + WDTHOLD;           // Stop WDT
     Init_System();                      // Init the Board
     LedSequence( 5 );                   // Light up LEDs
-  
+
     while(1)
     {
         // Variable initialisation
@@ -86,8 +86,8 @@ void main(void)
             case MODE_4:   Mode4();  break;
             case MODE_5:   Mode5();  break;
             case MODE_6:   Mode6();  break;
+            case MODE_7:   Mode7();  break;
 
-            case MODE_7:
             case MODE_8:
             default:                    // This is not a valid mode (Switch S2 was pressed w/o mode select)
                 LEDsOff();
@@ -189,6 +189,67 @@ __interrupt void Timer_A (void)
     __no_operation();
 }
 
+int toggle_edge = 0;
+
+// TA0_A1 Interrupt vector
+#pragma vector = TIMER0_A1_VECTOR
+__interrupt void TIMER0_A1_ISR (void)
+{
+    switch(__even_in_range(TA0IV,0x0A))
+    {
+        case  TA0IV_NONE: break;              // Vector  0:  No interrupt
+        case  TA0IV_TACCR1:                   // Vector  2:  TACCR1 CCIFG
+
+            if( start == 1 ) // maybe not needed...
+            {
+                StartTime = TA0CCR1;
+                start = 0;             // set to 1 after receiving of data completes
+            }
+            else
+            {
+                EndTime = TA0CCR1;
+                time = EndTime - StartTime;
+//                if( time <= 0 ) { time = 0xFFFF - time; } // Roll over to 0 occurred, done in main
+                StartTime = EndTime;
+
+                __bic_SR_register_on_exit( LPM0_bits );  // Exit LPM2 on return to main
+                __no_operation();                        // For debugger
+            }
+
+//==================================================
+/*
+//            if (TA0CCTL1 & CCI)               // Pin status, rising edge
+            if( toggle_edge == 0 )
+            {
+                REdge1 = TA0CCR1;
+                time   = REdge1 - REdge2;
+                toggle_edge = 1;
+            }
+            else                              // falling edge
+            {
+                REdge2 = TA0CCR1;
+                time   = REdge2 - REdge1;
+//                PulseCount1 = (0x0000FFFF * (long)OverflowTimes) + (long)EndTime - (long)StartTime;
+                toggle_edge = 0;
+
+                __bic_SR_register_on_exit( LPM2_bits );  // Exit LPM0 on return to main
+                __no_operation();                        // For debugger
+            }
+            // OverflowTimes = 0;
+*/
+            break;
+
+        case TA0IV_TACCR2: break;             // Vector  4:  TACCR2 CCIFG
+        case TA0IV_6:      break;             // Vector  6:  Reserved CCIFG
+//        case TA0IV_8:      break;             // Vector  8:  Reserved CCIFG
+        case TA0IV_TAIFG:                    // Vector 10:  TAIFG
+            LED_Toggle( LED5 );              // roll over to 0
+//            OverflowTimes++;
+            break;
+        default:           break;
+    }
+}
+
 
 /**********************************************************************//**
  * @brief Timer A1 ISR for debounce Timer
@@ -234,7 +295,7 @@ int previous  = 0; // used to switch on/off the PWM output
 
 #define half_1 0
 #define half_2 1
-int half      = half_1; // Determines the 2 halves of a bit
+int half = half_1; // Determines the 2 halves of a bit
 
 #pragma vector = TIMER2_B0_VECTOR
 __interrupt void TIMER2_B0_ISR(void) {
@@ -258,7 +319,7 @@ __interrupt void TIMER2_B0_ISR(void) {
         }
         prev_flag = flag;
     }
-    else if( mode == MODE_7 ) // NOTE: SKIP THIS FOR NOW
+    else if( mode == MODE_8 ) // NOTE: SKIP THIS FOR NOW
     {
         // Note: Make sure the byte_c (Byte Counter) is set before enabling the transmission
         if( bit_c == 0 ) // 1 Byte has been sent

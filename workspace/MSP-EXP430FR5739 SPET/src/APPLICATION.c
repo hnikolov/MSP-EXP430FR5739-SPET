@@ -203,7 +203,7 @@ void Mode5(void)
     LedSequence( 2 );
     LED_On( LED5 );
 
-    byte_TX = 0xA5;                       // Set a byte to be "send" via a pin
+    byte_TX = 0xA5;                      // Set a byte to be "send" via a pin
 
     UCA0IE |= UCRXIE;                    // Enable UART RX Interrupt
 
@@ -286,4 +286,119 @@ void Mode6(void)
     UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
 
     LED_Off( LED6 );
+}
+
+
+/**********************************************************************//**
+ * @brief  Mode 7
+ *
+ * @param  none
+ *
+ * @return none
+ *************************************************************************/
+void Mode7(void)
+{
+    char str_Mode[] = "Mode 7: Timer capture mode\n";
+    UART_TX_Data(str_Mode, strlen(str_Mode));
+
+    UART_RX_OK = 0;
+
+    idx = 7;
+
+    LEDsOff();
+    LED_On( LED7 );
+
+    UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
+
+    //===================================================================
+
+    // Configure Port Pins
+    P1DIR  &= ~BIT0;                            // P1.0/TA0.1 Input Capture
+    P1SEL0 |=  BIT0;                            // TA0.1 option select
+
+    // Configure TA1.1 to output PWM signal
+    // Period = 82/32khz = 2.5ms ~ 400Hz Freq
+    // TODO: ~200 us period
+    P1DIR  |=  BIT5;                     // P1.5/TB0.2 output
+    P1SEL0 |=  BIT5;                     // P1.5 options select
+    P1OUT  &= ~BIT5;                     // Set P1.5 to 0 (low) when PWM is stopped
+
+    TB0CCR0  = T_2400_BAUD-1;            // PWM Period = 415us
+
+    TB0CCTL2 = OUTMOD_7;                 // CCR2 7:reset/set; 3:set/reset
+    TB0CCR2  = HALF_T_2400_BAUD;         // CCR2: PWM duty cycle 50%
+    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // ACLK (), up mode, clear TAR
+
+    //==========================================================================
+    // Configure the TA0CCR1 to do input capture
+    TA0CCTL1 = CAP + CM_3 + CCIE + SCS + CCIS_0;
+                                              // TA0CCR1 Capture mode; CCI1A; Both
+                                              // Rising and Falling Edge; interrupt enable
+    TA0CTL |= TASSEL_2 + MC_2 + TACLR + TAIE;        // SMCLK, Cont Mode; clear timer
+    // TACLR Clear the current timer value as well as the divider and mode
+    // ID_3 divide clk by 8
+    // TAIE enables the TAIFG interrupt request
+
+    // Variable Initialization
+    Count = 0x0;
+    First_Time = 0x01;
+    //===================================================================
+
+    int Period, ON_Period;
+    unsigned char DutyCycle;
+
+    REdge1 = 0;
+    REdge2 = 0;
+    time   = 0;
+    start  = 1;
+
+    while( mode == MODE_7 )
+    {
+        // Wait in LPM2 after every character received
+        __bis_SR_register(LPM0_bits + GIE); // Enter LPM2 w/interrupt
+        __no_operation();                   // For debugger
+
+        // On exiting LPM0
+        if (TA0CCTL1 & COV)  { LED_On( LED8 ); } // Check for Capture Overflow
+        // clear COV if set (in register TAxCCTLn)
+        if( time <= 0 )      { LED_Toggle( LED2 );   } // Measured time must be > 0
+        if( time <= 0 )      { time = 0xFFFF - time; }
+
+//        if( time > 20026 )   { LED_Toggle( LED1 ); }    // 0.125us * 20026 = 2.5ms
+//        if( time < 10000 )   { LED_Toggle( LED7 ); }
+
+        if( time > 1400 )   { LED_Toggle( LED1 ); }    // 0.125us * 1400 = 175us
+        if( time >  400 )   { LED_Toggle( LED7 ); }
+
+/*        LED_Toggle( LED7 );
+
+        LED_Off( LED1 );
+        LED_Off( LED8 );
+
+        if (TA0CCTL1 & COV)                   // Check for Capture Overflow
+        {
+            LED_On( LED1 );
+//            while(1);                         // Loop Forever
+        }
+
+        Period    = REdge2 - REdge1;             // Calculate Period
+        ON_Period = FEdge  - REdge1;             // On period
+
+        if( ON_Period < 0 ) { LED_On( LED8 ); }
+
+//        DutyCycle = ((unsigned long)ON_Period*100/Period);
+        DutyCycle = 25;
+
+        if( DutyCycle != 25 ) { LED_Toggle( LED7 );     }
+        else                  { LED_Toggle( LED7 ); }
+*/
+    } // end of while() loop
+
+
+    TB0CTL   = 0;
+
+    TA0CCTL1 = 0;
+    TA0CTL   = 0;
+
+    LED_Off( LED7 );
 }
