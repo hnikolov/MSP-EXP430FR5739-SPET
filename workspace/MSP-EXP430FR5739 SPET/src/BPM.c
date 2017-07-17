@@ -25,7 +25,7 @@ void IR_TX_Data( volatile char *uc_pBuff, unsigned int ui_Size )
     enable_Pin_PWM();
 
     sendBits(0x07, 3);
-    // sendPreamble_24() // To be enabled after testing with the Oscilloscope
+    // sendPreamble_12() // To be enabled after testing with the Oscilloscope
 
     byte_c = ui_Size;                   // Number of data bytes to be sent
 

@@ -40,11 +40,11 @@ inline void sendBits( char ch_Value, unsigned int num_Bits )
     byte_c = temp_byte_c; // Byte count
 }
 
-inline void sendPreamble_24()
+// Note: The preamble is 24 half ones (12 bits)
+inline void sendPreamble_12()
 {
     sendBits(0xFF, 8);
-    sendBits(0xFF, 8);
-    sendBits(0xFF, 8);
+    sendBits(0x0F, 4);
 }
 
 #endif // BPM_INCLUDED
