@@ -65,7 +65,7 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 // T = 832 us (6656 but tuned to 6624)
 #define T_1200_BAUD 6624
 #define HALF_T_1200_BAUD (T_1200_BAUD / 2)
-
+// Probably not needed
 #define NOMINAL_HALF_BIT_TIME_ONE_1200_BAUD (     T_1200_BAUD / 2)
 #define NOMINAL_BIT_TIME_ZERO_1200_BAUD     (     T_1200_BAUD    )
 
@@ -79,7 +79,7 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 // T = 416 us (3328 but tuned to 3312)
 #define T_2400_BAUD 3312
 #define HALF_T_2400_BAUD (T_2400_BAUD / 2)
-
+// Probably not needed
 #define NOMINAL_HALF_BIT_TIME_ONE_2400_BAUD (     T_2400_BAUD / 2)
 #define NOMINAL_BIT_TIME_ZERO_2400_BAUD     (     T_2400_BAUD    )
 
@@ -93,7 +93,7 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 // T = 208 us (1664 but tuned to 1656)
 #define T_4800_BAUD 1656
 #define HALF_T_4800_BAUD (T_4800_BAUD / 2)
-
+// Probably not needed
 #define NOMINAL_HALF_BIT_TIME_ONE_4800_BAUD (     T_4800_BAUD / 2)
 #define NOMINAL_BIT_TIME_ZERO_4800_BAUD     (     T_4800_BAUD    )
 

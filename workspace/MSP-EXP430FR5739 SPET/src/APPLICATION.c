@@ -337,21 +337,21 @@ void Mode7(void)
     // TAIE enables the TAIFG interrupt request
     //===================================================================
 
-    // Variable Initialization
+    // Variable Initialisation
     RollBack2Zero = 0;
-    time      = 0;
-    StartTime = 0;
-    EndTime   = 0;
-    start     = 1;
+    time          = 0;
+    StartTime     = 0;
+    EndTime       = 0;
+    start         = 1;
 
     LEDsOff();
 
     while( mode == MODE_7 )
     {
         __bis_SR_register( LPM2_bits + GIE ); // Enter LPM2 w/interrupt
-        __no_operation();                   // For debugger
+        __no_operation();                     // For debugger
 
-        // On exiting LPM0
+        // On exiting LPM
 
         // Debug --------------------------------------
         if (TA0CCTL1 & COV)  { LED_On( LED8 ); } // Check for Capture Overflow
@@ -376,4 +376,93 @@ void Mode7(void)
     TA0CTL   = 0;
 
     LED_Off( LED7 );
+}
+
+/**********************************************************************//**
+ * @brief  Mode 8
+ *
+ * @param  none
+ *
+ * @return none
+ *************************************************************************/
+void Mode8(void)
+{
+    char str_Mode[] = "Mode 8: IR communication with an 854 gauge\n";
+    UART_TX_Data(str_Mode, strlen(str_Mode));
+
+    UART_RX_OK = 0;
+
+    idx = 7;
+
+    LEDsOff();
+    LED_On( LED8 );
+
+    UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
+
+    // TODO to be removed ======================================================
+    // Configure TA1.1 to output PWM signal
+    P1DIR  |=  BIT5;                            // P1.5/TB0.2 output
+    P1SEL0 |=  BIT5;                            // P1.5 options select
+    P1OUT  &= ~BIT5;                            // Set P1.5 to 0 (low) when PWM is stopped
+
+    TB0CCR0  = T_BAUD-1;                        // PWM Period
+
+    TB0CCTL2 = OUTMOD_7;                        // CCR2 7:reset/set; 3:set/reset
+    TB0CCR2  = HALF_T_BAUD;                     // CCR2: PWM duty cycle 50%
+    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;         // ACLK (), up mode, clear TAR
+
+    //==========================================================================
+    // Configure Port Pin
+    P1DIR  &= ~BIT0;                            // P1.0/TA0.1 Input Capture
+    P1SEL0 |=  BIT0;                            // TA0.1 option select
+
+    // Configure the TA0CCR1 to do input capture
+    TA0CCTL1 = CAP + CM_3 + CCIE + SCS + CCIS_0;
+    // TA0CCR1 Capture mode; Both Rising and Falling Edge; Interrupt enable; Synchronized; CCI1A
+
+    TA0CTL |= TASSEL_2 + MC_2 + TACLR + TAIE; // SMCLK, Cont Mode; clear timer, int. enable on roll over
+    // TAIE enables the TAIFG interrupt request
+    //===================================================================
+
+    // Variable Initialisation
+    RollBack2Zero = 0;
+    time          = 0;
+    StartTime     = 0;
+    EndTime       = 0;
+    start         = 1;
+
+    LEDsOff();
+
+    while( mode == MODE_8 )
+    {
+        __bis_SR_register( LPM2_bits + GIE ); // Enter LPM2 w/interrupt
+        __no_operation();                     // For debugger
+
+        // On exiting LPM
+
+        // Debug --------------------------------------
+        if (TA0CCTL1 & COV) { LED_On( LED8 ); } // Check for Capture Overflow -> clear COV in SW if set (in register TAxCCTLn)
+        if( RollBack2Zero )                     // Check for timer roll over
+        {
+            LED_Toggle( LED5 );
+            RollBack2Zero  = 0;
+        }
+        if( time <= 0 ) { LED_Toggle( LED2 ); } // Measured time must be > 0
+        //---------------------------------------------
+
+        if( time <= 0 ) { time = 0xFFFF - time; }
+
+        if( (time >= HALF_BIT_TIME_ONE_LO_LIM) && (time <= HALF_BIT_TIME_ONE_HI_LIM) ) { LED_Toggle( LED1 ); } // half one
+        if( (time >  BIT_TIME_ZERO_LO_LIM)     && (time <= BIT_TIME_ZERO_HI_LIM)     ) { LED_Toggle( LED7 ); } // zero
+        if( (time <  HALF_BIT_TIME_ONE_LO_LIM) || (time >  BIT_TIME_ZERO_HI_LIM)     ) { LED_Toggle( LED3 ); } // out of bounds
+
+    } // end of while() loop
+
+
+    TB0CTL   = 0; // TODO: to be removed
+
+    TA0CCTL1 = 0;
+    TA0CTL   = 0;
+
+    LED_Off( LED8 );
 }

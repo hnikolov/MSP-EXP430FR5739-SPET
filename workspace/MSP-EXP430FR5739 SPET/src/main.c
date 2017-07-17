@@ -87,8 +87,8 @@ void main(void)
             case MODE_5:   Mode5();  break;
             case MODE_6:   Mode6();  break;
             case MODE_7:   Mode7();  break;
+            case MODE_8:   Mode8();  break;
 
-            case MODE_8:
             default:                    // This is not a valid mode (Switch S2 was pressed w/o mode select)
                 LEDsOff();
                 while( UserInput == 0 ) // Blink LED1 to indicate invalid entry
@@ -189,7 +189,6 @@ __interrupt void Timer_A (void)
     __no_operation();
 }
 
-int toggle_edge = 0;
 
 // TA0_A1 Interrupt vector
 #pragma vector = TIMER0_A1_VECTOR
@@ -219,7 +218,6 @@ __interrupt void TIMER0_A1_ISR (void)
 
         case TA0IV_TACCR2: break;             // Vector  4:  TACCR2 CCIFG
         case TA0IV_6:      break;             // Vector  6:  Reserved CCIFG
-//        case TA0IV_8:      break;             // Vector  8:  Reserved CCIFG
         case TA0IV_TAIFG:                     // Vector 0x0E:  TAIFG
             RollBack2Zero++;
             break;
