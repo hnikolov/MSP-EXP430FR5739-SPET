@@ -44,3 +44,246 @@ void IR_TX_Data( volatile char *uc_pBuff, unsigned int ui_Size )
 
     disable_Pin_PWM();
 }
+
+static char BPM_Buffer_RX[BPM_BUFF_SIZE] = {0};
+static unsigned int nBytes_Rx = 0;
+
+typedef enum
+{
+    st_WAIT_PRE_AMBLES = 0,
+    st_WAIT_FOR_START_BIT,
+    st_RECEIVING_DATA_BITS
+
+} bpm_state_t;
+
+bpm_state_t bpm_state = st_WAIT_PRE_AMBLES;
+
+void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
+{
+    static int preamble_counter = 0;
+    static int bit_counter      = 0;
+    static int first_half_one   = 0;
+
+    BPM_BYTE_RX_OK = 0;
+
+    switch( bpm_state )
+    {
+        case st_WAIT_PRE_AMBLES:
+            switch( input )
+            {
+                case 1: preamble_counter += 1; break; // half one detected
+
+                case 0:
+                    if( preamble_counter > MIN_NR_OF_PRE_AMBLES ) // Start bit after preambles detected
+                    {
+                        nBytes_Rx      = 0;
+                        received_byte  = 0x00;
+                        bit_counter    = 0;
+                        first_half_one = 0;
+                        bpm_state      = st_RECEIVING_DATA_BITS;
+                    }
+                    else { preamble_counter = 0; } // Not enough preambles received, keep the same state
+                    break;
+
+                // Kind of carrier drop or undefined timer value, keep the same state
+                default: preamble_counter = 0; break;
+            }
+            break;
+
+        case st_WAIT_FOR_START_BIT:
+            switch( input )
+            {
+                case 0:        // Zero detected, this is the startbit for a new byte
+                    received_byte  = 0x00;
+                    bit_counter    = 0;
+                    first_half_one = 0;
+                    bpm_state      = st_RECEIVING_DATA_BITS;
+                    break;
+
+                case 1: break; // Another (second) stop bit or new pre-ambles
+
+                default:       // Timer value out of range
+                    preamble_counter = 0;
+                    bpm_state        = st_WAIT_PRE_AMBLES;
+                    break;
+            }
+            break;
+
+        case st_RECEIVING_DATA_BITS:
+            switch( input )
+            {
+                case 1: // half one
+                    if( first_half_one == 1 ) // Full one detected
+                    {
+                        if( bit_counter == 8 ) // Stop bit detected
+                        {
+                            BPM_Buffer_RX[ nBytes_Rx ] = received_byte; // Add byte to buffer
+                            nBytes_Rx                 += 1;
+                            BPM_BYTE_RX_OK             = 1;
+                            bpm_state                  = st_WAIT_FOR_START_BIT;
+                        }
+                        else // Add bit to byte
+                        {
+                            received_byte >>= 1;
+                            received_byte |= 0x80;
+                            bit_counter++;
+                        }
+
+                        first_half_one = 0;
+
+                    } else { first_half_one = 1; }
+                    break;
+
+                case 0: // zero
+                    if( first_half_one == 0 ) // Additional check, add bit to byte
+                    {
+                        received_byte >>= 1;
+                        bit_counter++;
+                    }
+                    else // first_half_one == 1, framing error, ignore bit
+                    {
+                        first_half_one = 0;
+                        bit_counter++;        // TODO: Do we need also to shift?
+                    }
+                    break;
+
+                default: // Timer value out of range
+                    preamble_counter = 0;
+                    bpm_state        = st_WAIT_PRE_AMBLES;
+                    break;
+            }
+            break;
+
+        default: // Unknown state; Should not happen
+            preamble_counter = 0;
+            bpm_state        = st_WAIT_PRE_AMBLES;
+            break;
+    }
+}
+
+
+
+
+//=========================================================================================
+void BPM_Rx_NO_HALF_ONE( int input ) // input is either zero, full one, or -1 (not valid)
+{
+    static int preamble_counter = 0;
+    static int bit_counter      = 0;
+
+    BPM_BYTE_RX_OK = 0;
+
+    switch( bpm_state )
+    {
+        case st_WAIT_PRE_AMBLES:
+            switch( input )
+            {
+                case 1: preamble_counter += 2; break; // Since input is 2 half ones
+
+                case 0:
+                    if( preamble_counter > MIN_NR_OF_PRE_AMBLES ) // Start bit after preambles detected
+                    {
+                        received_byte = 0x00;
+                        bit_counter   = 0;
+                        bpm_state     = st_RECEIVING_DATA_BITS;
+                    }
+                    else { preamble_counter = 0; } // Not enough preambles received, keep the same state
+                    break;
+
+                // Kind of carrier drop or undefined timer value, keep the same state
+                default: preamble_counter = 0; break;
+            }
+            break;
+
+        case st_WAIT_FOR_START_BIT:
+            switch( input )
+            {
+                case 0:        // Zero detected, this is the startbit for a new byte
+                    received_byte = 0x00;
+                    bit_counter   = 0;
+                    bpm_state     = st_RECEIVING_DATA_BITS;
+                    break;
+
+                case 1: break; // Another stop bit or new pre-ambles = end-of-frame?
+
+                default:       // Timer value out of range
+                    preamble_counter = 0;
+                    bpm_state        = st_WAIT_PRE_AMBLES;
+                    break;
+            }
+            break;
+
+        case st_RECEIVING_DATA_BITS:
+            switch( input )
+            {
+                case 1:
+                    if( bit_counter == 8 ) // The stop bit detected
+                    {
+                        bpm_state      = st_WAIT_FOR_START_BIT;
+                        BPM_BYTE_RX_OK = 1; // TODO: Add byte to buffer
+                    }
+                    else // Add bit to byte
+                    {
+                        received_byte >>= 1;
+                        received_byte |= 0x80;
+                        bit_counter++;
+                    }
+                    break;
+
+                case 0: // Add bit to byte
+                    received_byte >>= 1;
+                    bit_counter++;
+                    break;
+
+                default: // Timer value out of range
+                    preamble_counter = 0;
+                    bpm_state        = st_WAIT_PRE_AMBLES;
+                    break;
+            }
+            break;
+
+        default: // Unknown state; Should not happen
+            preamble_counter = 0;
+            bpm_state        = st_WAIT_PRE_AMBLES;
+            break;
+    }
+}
+
+// CANNOT BE USED BECAUSE the 854 gauge sends 25 (odd) half ones as preambles :(
+// getBPM_Bit( ) -----------------------------------------------------------------------------------
+/*
+unsigned char first_half_one = 0;
+if( (time >= HALF_BIT_TIME_ONE_LO_LIM)  && (time <= HALF_BIT_TIME_ONE_HI_LIM) ) // half one detected
+{
+    if( first_half_one == 0 )
+    {
+        first_half_one = 1;
+    }
+    else
+    {
+        LED_Toggle( LED1 );
+        detected_bit   = 1;
+        first_half_one = 0;
+    }
+}
+else if( (time > BIT_TIME_ZERO_LO_LIM) && (time <= BIT_TIME_ZERO_HI_LIM) ) // zero detected
+{
+    if( first_half_one == 0 )
+    {
+        LED_Toggle( LED7 );
+        detected_bit = 0;
+    }
+    else // framing error, ignore bit
+    {
+        LED_Toggle( LED3 );
+        detected_bit   = -1;
+        first_half_one =  0;
+    }
+}
+//        if( (time <  HALF_BIT_TIME_ONE_LO_LIM) || (time >  BIT_TIME_ZERO_HI_LIM) ) { LED_Toggle( LED3 ); } // out of bounds
+else // out of bounds detected, ignore bit
+{
+    LED_Toggle( LED3 );
+    detected_bit   = -1;
+    first_half_one =  0;
+}
+*/

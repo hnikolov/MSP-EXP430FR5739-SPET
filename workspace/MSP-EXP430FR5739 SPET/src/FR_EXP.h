@@ -140,7 +140,7 @@ volatile unsigned int UART_RX_OK;
 
 // Used to send data via an output pin
 volatile char byte_TX;
-volatile static char BPM_Buffer[8] = {0};
+volatile static char BPM_Buffer_TX[8] = {0};
 volatile int byte_c; // Byte Counter
 volatile int bit_c;  // Bit  Counter
 

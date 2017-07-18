@@ -267,10 +267,10 @@ void Mode6(void)
             byte_c = 1;
             Byte_Tx_IR( char_RX );
 /*/
-            BPM_Buffer[0] = char_RX;
-            BPM_Buffer[1] = char_RX;
-            BPM_Buffer[2] = char_RX;
-            IR_TX_Data( BPM_Buffer, 3 );
+            BPM_Buffer_TX[0] = char_RX;
+            BPM_Buffer_TX[1] = char_RX;
+            BPM_Buffer_TX[2] = char_RX;
+            IR_TX_Data( BPM_Buffer_TX, 3 );
 
 //            sendBits(0x01, 1);
 //            sendBits(0x01, 1);
@@ -433,12 +433,15 @@ void Mode8(void)
 
     LEDsOff();
 
+    int detected_bit = -1;
+
     while( mode == MODE_8 )
     {
         __bis_SR_register( LPM2_bits + GIE ); // Enter LPM2 w/interrupt
         __no_operation();                     // For debugger
 
         // On exiting LPM
+        detected_bit = -1;
 
         // Debug --------------------------------------
         if (TA0CCTL1 & COV) { LED_On( LED8 ); } // Check for Capture Overflow -> clear COV in SW if set (in register TAxCCTLn)
@@ -450,11 +453,42 @@ void Mode8(void)
         if( time <= 0 ) { LED_Toggle( LED2 ); } // Measured time must be > 0
         //---------------------------------------------
 
+        // Measured time must be > 0 ---------------------------------------------------------------------
         if( time <= 0 ) { time = 0xFFFF - time; }
 
-        if( (time >= HALF_BIT_TIME_ONE_LO_LIM) && (time <= HALF_BIT_TIME_ONE_HI_LIM) ) { LED_Toggle( LED1 ); } // half one
-        if( (time >  BIT_TIME_ZERO_LO_LIM)     && (time <= BIT_TIME_ZERO_HI_LIM)     ) { LED_Toggle( LED7 ); } // zero
-        if( (time <  HALF_BIT_TIME_ONE_LO_LIM) || (time >  BIT_TIME_ZERO_HI_LIM)     ) { LED_Toggle( LED3 ); } // out of bounds
+        //------------------------------------------------------------------------------------------------
+        if( (time >= HALF_BIT_TIME_ONE_LO_LIM) && (time <= HALF_BIT_TIME_ONE_HI_LIM) ) // half one
+        {
+            LED_Toggle( LED1 );
+            detected_bit   = 1;
+        }
+        else if( (time >  BIT_TIME_ZERO_LO_LIM) && (time <= BIT_TIME_ZERO_HI_LIM) ) // zero
+        {
+            LED_Toggle( LED7 );
+            detected_bit   = 0;
+        }
+        else // out of bounds
+        {
+            LED_Toggle( LED3 );
+            detected_bit   = 1;
+        }
+        //------------------------------------------------------------------------------------------------
+
+//        if( first_half_one == 0 ) { BPM_Rx( detected_bit );   } // Argument is zero, full one, or -1 (not valid)
+//        if( BPM_RX_OK      == 1 ) { Decode_GPU( BPM_Buffer_RX ); }
+
+        BPM_Rx( detected_bit ); // Argument is zero, half one, or -1 (not valid)
+
+        if( BPM_BYTE_RX_OK == 1 ) { GPU_Rx( received_byte ); } // Note: Decoding GPU in-lined with receiving BPM
+
+        if( GPU_RX_OK == 1 )
+        {
+            LED_Toggle( LED4 );
+//            GPU_Check();
+//            GPU_Process();
+//            GPU_Tx();
+            GPU_RX_OK = 0; // Clear the flag
+        }
 
     } // end of while() loop
 

@@ -6,8 +6,21 @@
 
 #include "FR_EXP.h"
 
+#define MIN_NR_OF_PRE_AMBLES 20
+#define NOM_NR_OF_PRE_AMBLES 24
+
+#define BPM_BUFF_SIZE 128
+volatile char received_byte;
+
+volatile unsigned int BPM_BYTE_RX_OK;
+
+
+
 void Byte_Tx_IR( char ch_Byte );
 void IR_TX_Data( volatile char *uc_pBuff, unsigned int ui_Size );
+
+void BPM_Rx( int input );
+void BPM_Rx_NO_HALF_ONE( int input ); // preferred
 
 volatile char idx;
 

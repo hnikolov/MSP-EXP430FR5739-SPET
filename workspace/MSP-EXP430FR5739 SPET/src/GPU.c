@@ -10,7 +10,7 @@
 #include "FR_EXP.h"
 #include "BPM.h"
 
-static char GPU_Buffer[BUFF_SIZE] = {0};
+static char GPU_Buffer[GPU_BUFF_SIZE] = {0};
 static unsigned int nBytes_Rx     =  0;
 
 typedef enum
@@ -39,7 +39,7 @@ void GPU_Rx( char input )
             break;
 
         case st_PLD: // Note: can receive 0 payload
-            if( nBytes_Rx > BUFF_SIZE-2 ) { state = st_STX; } // -2 to include the BCC byte
+            if( nBytes_Rx > GPU_BUFF_SIZE-2 ) { state = st_STX; } // -2 to include the BCC byte
             else
             {
                 if(      input == STX )   { nBytes_Rx = 0;  } // Read STX; stay at PLD
@@ -50,9 +50,9 @@ void GPU_Rx( char input )
             break;
 
         case st_BCC: // Protocol message received
-            state = st_STX;
             GPU_Buffer[nBytes_Rx++] = input;
             GPU_RX_OK = 1;
+            state = st_STX;
             break;
 
         default:     // Unknown state; Should not happen

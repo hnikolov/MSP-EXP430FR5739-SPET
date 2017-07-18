@@ -9,7 +9,7 @@
 #define ETX (0x83)
 #define ACK (0x86)
 
-#define BUFF_SIZE 128
+#define GPU_BUFF_SIZE 128
 
 volatile unsigned int GPU_RX_OK;
 
