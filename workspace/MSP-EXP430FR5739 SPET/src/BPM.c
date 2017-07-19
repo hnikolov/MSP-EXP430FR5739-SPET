@@ -46,7 +46,8 @@ void IR_TX_Data( volatile char *uc_pBuff, unsigned int ui_Size )
 }
 
 static char BPM_Buffer_RX[BPM_BUFF_SIZE] = {0};
-static unsigned int nBytes_Rx = 0;
+static unsigned int nBytes_Rx            =  0;
+//static stop_bit_count = 0;
 
 typedef enum
 {
@@ -64,7 +65,8 @@ void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
     static int bit_counter      = 0;
     static int first_half_one   = 0;
 
-    BPM_BYTE_RX_OK = 0;
+    BPM_BYTE_RX_OK  = 0;
+    BPM_FRAME_RX_OK = 0;
 
     switch( bpm_state )
     {
@@ -97,12 +99,16 @@ void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
                     received_byte  = 0x00;
                     bit_counter    = 0;
                     first_half_one = 0;
+//                    stop_bit_count = 0;
                     bpm_state      = st_RECEIVING_DATA_BITS;
                     break;
 
-                case 1: break; // Another (second) stop bit or new pre-ambles
+                case 1: break; // Another (second) stop bit or new pre-ambles (TODO)
 
-                default:       // Timer value out of range
+                default:       // Timer value out of range -> end of BPM frame
+                    BPM_FRAME_RX_OK = 1;
+                    LED_Toggle( LED6 );
+
                     preamble_counter = 0;
                     bpm_state        = st_WAIT_PRE_AMBLES;
                     break;
@@ -120,6 +126,7 @@ void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
                             BPM_Buffer_RX[ nBytes_Rx ] = received_byte; // Add byte to buffer
                             nBytes_Rx                 += 1;
                             BPM_BYTE_RX_OK             = 1;
+//                            stop_bit_count            += 1;
                             bpm_state                  = st_WAIT_FOR_START_BIT;
                         }
                         else // Add bit to byte
@@ -144,10 +151,14 @@ void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
                     {
                         first_half_one = 0;
                         bit_counter++;        // TODO: Do we need also to shift?
+                        LED_On( LED8 );
                     }
                     break;
 
                 default: // Timer value out of range
+                    // TODO: End of frame or framing error?
+                    LED_Toggle( LED7 );
+
                     preamble_counter = 0;
                     bpm_state        = st_WAIT_PRE_AMBLES;
                     break;
@@ -155,13 +166,21 @@ void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
             break;
 
         default: // Unknown state; Should not happen
+            // TODO: End of frame:
+            LED_Toggle( LED8 );
+
             preamble_counter = 0;
             bpm_state        = st_WAIT_PRE_AMBLES;
             break;
     }
 }
 
-
+// For debug only
+void BPM_Tx()
+{
+    UART_TX_Data(BPM_Buffer_RX, nBytes_Rx);
+    UART_TX_Char('\n'); // Needed by the Bluetooth manager
+}
 
 
 //=========================================================================================

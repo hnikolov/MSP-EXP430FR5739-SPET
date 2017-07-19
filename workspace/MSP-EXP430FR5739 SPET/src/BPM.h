@@ -13,8 +13,9 @@
 volatile char received_byte;
 
 volatile unsigned int BPM_BYTE_RX_OK;
+volatile unsigned int BPM_FRAME_RX_OK;
 
-
+void BPM_Tx();
 
 void Byte_Tx_IR( char ch_Byte );
 void IR_TX_Data( volatile char *uc_pBuff, unsigned int ui_Size );

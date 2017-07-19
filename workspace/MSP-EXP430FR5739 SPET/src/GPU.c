@@ -11,7 +11,7 @@
 #include "BPM.h"
 
 static char GPU_Buffer[GPU_BUFF_SIZE] = {0};
-static unsigned int nBytes_Rx     =  0;
+static unsigned int nBytes_Rx         =  0;
 
 typedef enum
 {

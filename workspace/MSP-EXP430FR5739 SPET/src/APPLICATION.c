@@ -416,6 +416,10 @@ void Mode8(void)
     P1DIR  &= ~BIT0;                            // P1.0/TA0.1 Input Capture
     P1SEL0 |=  BIT0;                            // TA0.1 option select
 
+//    P1REN  &= ~BIT0;                            // No pull-up/down resistors
+    P1REN  |=  BIT0;                            // Pull-up/down resistors enabled
+    P1OUT  |=  BIT0;                            // Pull-up resistor
+
     // Configure the TA0CCR1 to do input capture
     TA0CCTL1 = CAP + CM_3 + CCIE + SCS + CCIS_0;
     // TA0CCR1 Capture mode; Both Rising and Falling Edge; Interrupt enable; Synchronized; CCI1A
@@ -447,10 +451,10 @@ void Mode8(void)
         if (TA0CCTL1 & COV) { LED_On( LED8 ); } // Check for Capture Overflow -> clear COV in SW if set (in register TAxCCTLn)
         if( RollBack2Zero )                     // Check for timer roll over
         {
-            LED_Toggle( LED5 );
+//            LED_Toggle( LED5 );
             RollBack2Zero  = 0;
         }
-        if( time <= 0 ) { LED_Toggle( LED2 ); } // Measured time must be > 0
+//        if( time <= 0 ) { LED_Toggle( LED2 ); } // Measured time must be > 0
         //---------------------------------------------
 
         // Measured time must be > 0 ---------------------------------------------------------------------
@@ -459,35 +463,44 @@ void Mode8(void)
         //------------------------------------------------------------------------------------------------
         if( (time >= HALF_BIT_TIME_ONE_LO_LIM) && (time <= HALF_BIT_TIME_ONE_HI_LIM) ) // half one
         {
-            LED_Toggle( LED1 );
+//            LED_Toggle( LED1 );
             detected_bit   = 1;
         }
         else if( (time >  BIT_TIME_ZERO_LO_LIM) && (time <= BIT_TIME_ZERO_HI_LIM) ) // zero
         {
-            LED_Toggle( LED7 );
+//            LED_Toggle( LED7 );
             detected_bit   = 0;
         }
         else // out of bounds
         {
-            LED_Toggle( LED3 );
-            detected_bit   = 1;
+//            LED_Toggle( LED3 );
+            detected_bit   = -1;
         }
         //------------------------------------------------------------------------------------------------
 
-//        if( first_half_one == 0 ) { BPM_Rx( detected_bit );   } // Argument is zero, full one, or -1 (not valid)
-//        if( BPM_RX_OK      == 1 ) { Decode_GPU( BPM_Buffer_RX ); }
 
         BPM_Rx( detected_bit ); // Argument is zero, half one, or -1 (not valid)
+
+//        if( BPM_FRAME_RX_OK == 1 ) { Decode_GPU( BPM_Buffer_RX, ui_size ); } // Note: Decoding GPU after a BPM frame received
 
         if( BPM_BYTE_RX_OK == 1 ) { GPU_Rx( received_byte ); } // Note: Decoding GPU in-lined with receiving BPM
 
         if( GPU_RX_OK == 1 )
         {
+            // Disable input capture
+            TA0CCTL1 = 0;
+            TA0CTL   = 0;
+
             LED_Toggle( LED4 );
-//            GPU_Check();
-//            GPU_Process();
+            GPU_Check();
+            GPU_Process();
 //            GPU_Tx();
+            BPM_Tx();
             GPU_RX_OK = 0; // Clear the flag
+
+            // Enable input capture
+            TA0CCTL1 = CAP + CM_3 + CCIE + SCS + CCIS_0;
+            TA0CTL |= TASSEL_2 + MC_2 + TACLR + TAIE;
         }
 
     } // end of while() loop
