@@ -492,6 +492,7 @@ void Mode8(void)
             TA0CTL   = 0;
 
             LED_Toggle( LED4 );
+
             GPU_Check();
             GPU_Process();
 //            GPU_Tx();
