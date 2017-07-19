@@ -103,7 +103,8 @@ void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
                     bpm_state      = st_RECEIVING_DATA_BITS;
                     break;
 
-                case 1: LED_Toggle( LED5 ); break; // Another (second) stop bit or new pre-ambles (TODO)
+//                case 1: LED_Toggle( LED5 ); break; // Another (second) stop bit or new pre-ambles (TODO)
+                case 1: break; // Another (second) stop bit or new pre-ambles (TODO)
 
                 default:       // Timer value out of range -> end of BPM frame
                     BPM_FRAME_RX_OK = 1;
