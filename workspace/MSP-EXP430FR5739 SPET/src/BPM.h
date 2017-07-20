@@ -55,10 +55,17 @@ inline void sendBits( char ch_Value, unsigned int num_Bits )
 }
 
 // Note: The preamble is 24 half ones (12 bits)
-inline void sendPreamble_12()
+inline void sendPreamble()
 {
     sendBits(0xFF, 8);
     sendBits(0x0F, 4);
+}
+
+inline int detect_bpm_bit( int aTime )
+{
+    if(      (time >= HALF_BIT_TIME_ONE_LO_LIM) && (time <= HALF_BIT_TIME_ONE_HI_LIM) ) { return  1; } // half one
+    else if( (time >  BIT_TIME_ZERO_LO_LIM)     && (time <= BIT_TIME_ZERO_HI_LIM)     ) { return  0; } // zero
+    else                                                                                { return -1; } // out of bounds
 }
 
 #endif // BPM_INCLUDED

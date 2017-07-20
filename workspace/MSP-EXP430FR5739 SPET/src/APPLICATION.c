@@ -399,34 +399,9 @@ void Mode8(void)
 
     UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt
 
-    // TODO to be removed ======================================================
-    // Configure TA1.1 to output PWM signal
-    P1DIR  |=  BIT5;                            // P1.5/TB0.2 output
-    P1SEL0 |=  BIT5;                            // P1.5 options select
-    P1OUT  &= ~BIT5;                            // Set P1.5 to 0 (low) when PWM is stopped
-
-    TB0CCR0  = T_BAUD-1;                        // PWM Period
-
-    TB0CCTL2 = OUTMOD_7;                        // CCR2 7:reset/set; 3:set/reset
-    TB0CCR2  = HALF_T_BAUD;                     // CCR2: PWM duty cycle 50%
-    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;         // ACLK (), up mode, clear TAR
-
+    init_IR_Rx();
+    enable_IR_Rx();
     //==========================================================================
-    // Configure Port Pin
-    P1DIR  &= ~BIT0;                            // P1.0/TA0.1 Input Capture
-    P1SEL0 |=  BIT0;                            // TA0.1 option select
-
-//    P1REN  &= ~BIT0;                            // No pull-up/down resistors
-    P1REN  |=  BIT0;                            // Pull-up/down resistors enabled
-    P1OUT  |=  BIT0;                            // Pull-up resistor
-
-    // Configure the TA0CCR1 to do input capture
-    TA0CCTL1 = CAP + CM_3 + CCIE + SCS + CCIS_0;
-    // TA0CCR1 Capture mode; Both Rising and Falling Edge; Interrupt enable; Synchronized; CCI1A
-
-    TA0CTL |= TASSEL_2 + MC_2 + TACLR + TAIE; // SMCLK, Cont Mode; clear timer, int. enable on roll over
-    // TAIE enables the TAIFG interrupt request
-    //===================================================================
 
     // Variable Initialisation
     RollBack2Zero = 0;
@@ -438,6 +413,11 @@ void Mode8(void)
     LEDsOff();
 
     int detected_bit = -1;
+
+    BPM_Buffer_TX[0] = 0x02;
+    BPM_Buffer_TX[1] = 0x86;
+    BPM_Buffer_TX[2] = 0x83;
+    BPM_Buffer_TX[3] = 0x85;
 
     while( mode == MODE_8 )
     {
@@ -454,54 +434,39 @@ void Mode8(void)
 //            LED_Toggle( LED5 );
             RollBack2Zero  = 0;
         }
-//        if( time <= 0 ) { LED_Toggle( LED2 ); } // Measured time must be > 0
+        if( time <= 0 ) { LED_Toggle( LED1 ); } // Measured time must be > 0
         //---------------------------------------------
 
         // Measured time must be > 0 ---------------------------------------------------------------------
         if( time <= 0 ) { time = 0xFFFF - time; }
 
-        //------------------------------------------------------------------------------------------------
-        if( (time >= HALF_BIT_TIME_ONE_LO_LIM) && (time <= HALF_BIT_TIME_ONE_HI_LIM) ) // half one
-        {
-//            LED_Toggle( LED1 );
-            detected_bit   = 1;
-        }
-        else if( (time >  BIT_TIME_ZERO_LO_LIM) && (time <= BIT_TIME_ZERO_HI_LIM) ) // zero
-        {
-//            LED_Toggle( LED7 );
-            detected_bit   = 0;
-        }
-        else // out of bounds
-        {
-//            LED_Toggle( LED3 );
-            detected_bit   = -1;
-        }
-        //------------------------------------------------------------------------------------------------
-
+        detected_bit = detect_bpm_bit( time );
 
         BPM_Rx( detected_bit ); // Argument is zero, half one, or -1 (not valid)
 
-//        if( BPM_FRAME_RX_OK == 1 ) { Decode_GPU( BPM_Buffer_RX, ui_size ); } // Note: Decoding GPU after a BPM frame received
-
         if( BPM_BYTE_RX_OK == 1 ) { GPU_Rx( received_byte ); } // Note: Decoding GPU in-lined with receiving BPM
 
+//        if( BPM_FRAME_RX_OK == 1 ) { Decode_GPU(); } // Note: Decoding GPU after a BPM frame received
+
+        if( BPM_FRAME_RX_OK == 1 ) { LED_Toggle( LED6 ); }
+
+//        if( BPM_FRAME_RX_OK == 1 )
         if( GPU_RX_OK == 1 )
         {
-            // Disable input capture
-            TA0CCTL1 = 0;
-            TA0CTL   = 0;
+            disable_IR_Rx();
 
             LED_Toggle( LED4 );
 
             GPU_Check();
-            GPU_Process();
+//            GPU_Process();
 //            GPU_Tx();
-            BPM_Tx();
-            GPU_RX_OK = 0; // Clear the flag
 
-            // Enable input capture
-            TA0CCTL1 = CAP + CM_3 + CCIE + SCS + CCIS_0;
-            TA0CTL |= TASSEL_2 + MC_2 + TACLR + TAIE;
+            IR_TX_Data( BPM_Buffer_TX, 4 );
+
+            BPM_Tx();
+            GPU_RX_OK = 0; // Must clear the flag here!
+
+            enable_IR_Rx();
         }
 
     } // end of while() loop
@@ -509,8 +474,7 @@ void Mode8(void)
 
     TB0CTL   = 0; // TODO: to be removed
 
-    TA0CCTL1 = 0;
-    TA0CTL   = 0;
+    disable_IR_Rx();
 
     LED_Off( LED8 );
 }

@@ -280,7 +280,7 @@ inline void enable_Pin_PWM()
 //    TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 
     // Used to alter modulated output/silence ("envelop")
-    TB2CCR0  = HALF_T_2400_BAUD;              // Represents half Bit duration 416/2 uS @ 8MHz, 2400 baudrate
+    TB2CCR0  = HALF_T_BAUD;              // Represents half Bit duration
     TB2CCTL0 = CCIE;
     TB2CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
 }
@@ -293,6 +293,34 @@ inline void disable_Pin_PWM()
 
     TB2CCTL0 = 0;
     TB2CTL   = 0;
+}
+
+inline void init_IR_Rx()
+{
+    // Configure Port Pin
+    P1DIR  &= ~BIT0;                            // P1.0/TA0.1 Input Capture
+    P1SEL0 |=  BIT0;                            // TA0.1 option select
+
+//    P1REN  &= ~BIT0;                            // No pull-up/down resistors
+    P1REN  |=  BIT0;                            // Pull-up/down resistors enabled
+    P1OUT  |=  BIT0;                            // Pull-up resistor
+}
+
+inline void enable_IR_Rx()
+{
+    // Configure the TA0CCR1 to do input capture
+    TA0CCTL1 = CAP + CM_3 + CCIE + SCS + CCIS_0;
+    // TA0CCR1 Capture mode; Both Rising and Falling Edge; Interrupt enable; Synchronized; CCI1A
+
+    TA0CTL |= TASSEL_2 + MC_2 + TACLR + TAIE; // SMCLK, Cont Mode; clear timer, int. enable on roll over
+    // TAIE enables the TAIFG interrupt request
+}
+
+inline void disable_IR_Rx()
+{
+    // Disable input capture
+    TA0CCTL1 = 0;
+    TA0CTL   = 0;
 }
 
 #endif // FR_EXP_INCLUDED

@@ -201,7 +201,7 @@ __interrupt void TIMER0_A1_ISR (void)
             if( start == 1 )
             {
                 StartTime = TA0CCR1;
-                start     = 0;                // set to 1 before start receiving data
+                start     = 0;                // Set to 1 before start receiving data
             }
             else
             {
@@ -294,7 +294,7 @@ __interrupt void TIMER2_B0_ISR(void) {
         }
         prev_flag = flag;
     }
-    else if( mode == MODE_8 ) // NOTE: SKIP THIS FOR NOW
+    else if( mode == 0xFF ) // NOTE: SKIP THIS FOR NOW
     {
         // Note: Make sure the byte_c (Byte Counter) is set before enabling the transmission
         if( bit_c == 0 ) // 1 Byte has been sent
@@ -332,7 +332,7 @@ __interrupt void TIMER2_B0_ISR(void) {
             bit_c--;
         }
     }
-    else if( mode == MODE_6 || mode == MODE_2 )
+    else if( mode == MODE_6 || mode == MODE_2 || mode == MODE_8 )
     {
         // Note: Make sure the byte_c (Byte Counter) is set before enabling the transmission
         if( bit_c == 0 ) // 1 Byte has been sent

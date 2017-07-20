@@ -4,6 +4,7 @@
  *
  ******************************************************************************/
 #include "BPM.h"
+#include "GPU.h"
 
 void Byte_Tx_IR( char ch_Byte )
 {
@@ -22,10 +23,11 @@ void Byte_Tx_IR( char ch_Byte )
 // Note: Valid ui_Size has to be checked before the call
 void IR_TX_Data( volatile char *uc_pBuff, unsigned int ui_Size )
 {
+    // TODO: UCA0IE &= ~UCRXIE; // Disable UART RX Interrupt?
     enable_Pin_PWM();
 
-    sendBits(0x07, 3);
-    // sendPreamble_12() // To be enabled after testing with the Oscilloscope
+    //sendBits(0x07, 3); // For debug with Oscilloscope
+    sendPreamble();
 
     byte_c = ui_Size;                   // Number of data bytes to be sent
 
@@ -38,16 +40,15 @@ void IR_TX_Data( volatile char *uc_pBuff, unsigned int ui_Size )
         __bis_SR_register( LPM2_bits ); // Enter LPM2
         __no_operation();               // For debugger
 
-        sendBits(0x01, 1);              // Stop bit
+        sendBits(0x03, 2);              // Stop bit
     }
-    sendBits(0x01, 1);                  // Frame Stop Bit
 
     disable_Pin_PWM();
+    // TODO: UCA0IE |= UCRXIE; // Enable UART RX Interrupt?
 }
 
 static char BPM_Buffer_RX[BPM_BUFF_SIZE] = {0};
 static unsigned int nBytes_Rx            =  0;
-//static stop_bit_count = 0;
 
 typedef enum
 {
@@ -59,7 +60,7 @@ typedef enum
 
 bpm_state_t bpm_state = st_WAIT_PRE_AMBLES;
 
-void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
+void BPM_Rx( int input ) // Input is either zero, half one, or -1 (not valid)
 {
     static int preamble_counter = 0;
     static int bit_counter      = 0;
@@ -73,13 +74,13 @@ void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
         case st_WAIT_PRE_AMBLES:
             switch( input )
             {
-                case 1: preamble_counter += 1; break; // half one detected
+                case 1: preamble_counter += 1; break; // half one
 
                 case 0:
-                    if( preamble_counter > MIN_NR_OF_PRE_AMBLES ) // Start bit after preambles detected
+                    if( preamble_counter > MIN_NR_OF_PRE_AMBLES ) // Start bit after preambles
                     {
                         nBytes_Rx      = 0;
-                        received_byte  = 0x00;
+                        received_byte  = 0;
                         bit_counter    = 0;
                         first_half_one = 0;
                         bpm_state      = st_RECEIVING_DATA_BITS;
@@ -95,21 +96,16 @@ void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
         case st_WAIT_FOR_START_BIT:
             switch( input )
             {
-                case 0:        // Zero detected, this is the startbit for a new byte
-                    received_byte  = 0x00;
-                    bit_counter    = 0;
-                    first_half_one = 0;
-//                    stop_bit_count = 0;
-                    bpm_state      = st_RECEIVING_DATA_BITS;
+                case 0:                      // Zero, this is the start bit for a new byte
+                    received_byte    = 0;
+                    bit_counter      = 0;
+                    first_half_one   = 0;
+                    bpm_state        = st_RECEIVING_DATA_BITS;
                     break;
 
-//                case 1: LED_Toggle( LED5 ); break; // Another (second) stop bit or new pre-ambles (TODO)
-                case 1: break; // Another (second) stop bit or new pre-ambles (TODO)
-
-                default:       // Timer value out of range -> end of BPM frame
-                    BPM_FRAME_RX_OK = 1;
-                    LED_Toggle( LED6 );
-
+                case  1: LED_Toggle( LED5 ); // Another (Third) stop bit or new pre-ambles (Error)
+                default:                     // Timer value out of range -> end of BPM frame
+                    BPM_FRAME_RX_OK  = 1;
                     preamble_counter = 0;
                     bpm_state        = st_WAIT_PRE_AMBLES;
                     break;
@@ -120,14 +116,14 @@ void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
             switch( input )
             {
                 case 1: // half one
-                    if( first_half_one == 1 ) // Full one detected
+                    if( first_half_one == 1 ) // Full one
                     {
-                        if( bit_counter == 8 ) // Stop bit detected
+                        if(      bit_counter == 8 ) { bit_counter++; }  // Stop bit
+                        else if( bit_counter == 9 )                     // Second stop bit
                         {
                             BPM_Buffer_RX[ nBytes_Rx ] = received_byte; // Add byte to buffer
                             nBytes_Rx                 += 1;
                             BPM_BYTE_RX_OK             = 1;
-//                            stop_bit_count            += 1;
                             bpm_state                  = st_WAIT_FOR_START_BIT;
                         }
                         else // Add bit to byte
@@ -156,8 +152,7 @@ void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
                     }
                     break;
 
-                default: // Timer value out of range
-                    // TODO: End of frame or framing error?
+                default: // Timer value out of range, framing error?
                     LED_Toggle( LED7 );
 
                     preamble_counter = 0;
@@ -167,7 +162,6 @@ void BPM_Rx( int input ) // input is either zero, half one, or -1 (not valid)
             break;
 
         default: // Unknown state; Should not happen
-            // TODO: End of frame:
             LED_Toggle( LED8 );
 
             preamble_counter = 0;
@@ -182,7 +176,6 @@ void BPM_Tx()
     UART_TX_Data(BPM_Buffer_RX, nBytes_Rx);
     UART_TX_Char('\n'); // Needed by the Bluetooth manager
 }
-
 
 //=========================================================================================
 void BPM_Rx_NO_HALF_ONE( int input ) // input is either zero, full one, or -1 (not valid)
