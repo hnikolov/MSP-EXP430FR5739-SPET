@@ -414,10 +414,14 @@ void Mode8(void)
 
     int detected_bit = -1;
 
-    BPM_Buffer_TX[0] = 0x02;
-    BPM_Buffer_TX[1] = 0x86;
-    BPM_Buffer_TX[2] = 0x83;
-    BPM_Buffer_TX[3] = 0x85;
+//    BPM_Buffer_TX[0] = STX;
+//    BPM_Buffer_TX[1] = ACK;
+//    BPM_Buffer_TX[2] = ETX;
+//    BPM_Buffer_TX[3] = 0x85; // BCC
+
+    BPM_Buffer_TX[0] = STX;
+    BPM_Buffer_TX[1] = ETX;
+    BPM_Buffer_TX[2] = 0x83; // BCC
 
     while( mode == MODE_8 )
     {
@@ -457,11 +461,21 @@ void Mode8(void)
 
             LED_Toggle( LED4 );
 
-            GPU_Check();
+            OneShotTimer( MILLISECONDS_12 );
+
+//            GPU_Check();     // Uses LED_Flash() -> 2 x 40ms one-shot timer delays
 //            GPU_Process();
 //            GPU_Tx();
 
-            IR_TX_Data( BPM_Buffer_TX, 4 );
+//            IR_TX_Data_1( BPM_Buffer_TX, 3 );
+
+            transmit_length = 4;  // Number of bytes to be sent from BPM_Buffer_TX
+            enable_Pin_PWM();
+
+            __bis_SR_register( LPM2_bits ); // Enter LPM2
+            __no_operation();               // For debugger
+
+            disable_Pin_PWM();
 
             BPM_Tx();
             GPU_RX_OK = 0; // Must clear the flag here!
@@ -470,9 +484,6 @@ void Mode8(void)
         }
 
     } // end of while() loop
-
-
-    TB0CTL   = 0; // TODO: to be removed
 
     disable_IR_Rx();
 

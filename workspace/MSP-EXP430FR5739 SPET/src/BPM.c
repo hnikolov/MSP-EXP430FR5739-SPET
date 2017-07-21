@@ -40,8 +40,9 @@ void IR_TX_Data( volatile char *uc_pBuff, unsigned int ui_Size )
         __bis_SR_register( LPM2_bits ); // Enter LPM2
         __no_operation();               // For debugger
 
-        sendBits(0x03, 2);              // Stop bit
+        sendBits(0x03, 2);              // 2 Stop bits
     }
+    sendBits(0x01, 1);                  // To trigger a switch at the end of the frame
 
     disable_Pin_PWM();
     // TODO: UCA0IE |= UCRXIE; // Enable UART RX Interrupt?

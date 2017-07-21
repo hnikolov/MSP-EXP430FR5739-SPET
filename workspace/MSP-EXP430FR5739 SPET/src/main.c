@@ -58,11 +58,19 @@ volatile unsigned char Switch2Pressed = 0;
 
 volatile unsigned char PWM_Flag       = 0;
 
+char BPM_Buffer_TEMP[8];
+
 void main(void)
 {  
     WDTCTL = WDTPW + WDTHOLD;           // Stop WDT
     Init_System();                      // Init the Board
     LedSequence( 5 );                   // Light up LEDs
+
+
+    BPM_Buffer_TEMP[0] = 0x02;
+    BPM_Buffer_TEMP[1] = 0x86;
+    BPM_Buffer_TEMP[2] = 0x83;
+    BPM_Buffer_TEMP[3] = 0x85; // BCC
 
     while(1)
     {
@@ -272,8 +280,27 @@ int previous  = 0; // used to switch on/off the PWM output
 #define half_2 1
 int half = half_1; // Determines the 2 halves of a bit
 
+//-- Mode 8 -------------------------------------------
+typedef enum
+{
+    st_SEND_PRE_AMBLES = 0,
+    st_SEND_START_BIT,
+    st_SEND_BYTES,
+    st_SEND_2_STOP_BITS
+
+} bpm_state_tx_t;
+
+bpm_state_tx_t transmitting_state = st_SEND_PRE_AMBLES;
+//-----------------------------------------------------
+
 #pragma vector = TIMER2_B0_VECTOR
 __interrupt void TIMER2_B0_ISR(void) {
+// Mode 8
+    static int pre_amble_counter = 0;
+    static unsigned char bit_counter, byte_counter;
+    static char byte;
+// ----------
+
     if( mode == MODE_4 )
     {
         if( TB0CCR2 > 997 || TB0CCR2 < 3 ) { direction = -direction; }
@@ -332,7 +359,7 @@ __interrupt void TIMER2_B0_ISR(void) {
             bit_c--;
         }
     }
-    else if( mode == MODE_6 || mode == MODE_2 || mode == MODE_8 )
+    else if( mode == MODE_6 || mode == MODE_2 )
     {
         // Note: Make sure the byte_c (Byte Counter) is set before enabling the transmission
         if( bit_c == 0 ) // 1 Byte has been sent
@@ -385,7 +412,121 @@ __interrupt void TIMER2_B0_ISR(void) {
             }
         }
     }
+    else if( mode == MODE_8 )
+    {
+        switch( transmitting_state )
+        {
+            case st_SEND_PRE_AMBLES:
+                toggle = 1;
+
+                pre_amble_counter++;
+
+                if( pre_amble_counter > NOM_NR_OF_PRE_AMBLES ) // TODO: Finish with on
+                {
+                    byte_counter       = 0;
+                    half = half_1; // just in case
+                    transmitting_state = st_SEND_START_BIT;
+                }
+                break;
+
+            case st_SEND_START_BIT:
+                if( half == half_1 )
+                {
+                    half   = half_2;
+                    toggle = 0;                              // Always toggle the signal at the beginning of a bit
+                }
+                else                                         // No toggling during half 2 - send '0'
+                {
+                    half = half_1;
+
+                    bit_counter  = 0;
+                    byte = BPM_Buffer_TEMP[ byte_counter ];
+                    //byte = 0x02;
+
+                    transmitting_state = st_SEND_BYTES;
+
+                    //----------------------------------
+                    //transmitting_state = st_SEND_PRE_AMBLES;
+                    //pre_amble_counter  = 0;
+                    //half = half_1; // just in case, ready for the next transmission
+
+                    //__bic_SR_register_on_exit( LPM2_bits ); // Exit LPM2
+                    //__no_operation();
+                    //---------------------------------
+                }
+                break;
+
+            case st_SEND_BYTES:
+                if( half == half_1 )
+                {
+                    half   = half_2;
+                    toggle = 1;                              // Always toggle the signal at the beginning of a bit
+                }
+                else
+                {
+                    half = half_1;
+
+                    if( (byte & 0x01) == 1 ) { toggle = 1; } // Send an 'one'
+                    else                     { toggle = 0; }
+
+                    byte >>= 1; // next bit
+
+                    bit_counter++;
+
+                    if( bit_counter == 8 )
+                    {
+                        bit_counter   = 0;
+                        byte_counter += 1;
+
+                        transmitting_state = st_SEND_2_STOP_BITS;
+                    }
+                }
+                break;
+
+            case st_SEND_2_STOP_BITS: // Send 2 stop bits = 4 half ones
+                toggle = 1;
+
+                bit_counter++;
+                if (bit_counter > 4)
+                {
+                    if( byte_counter == transmit_length ) // End of transmission
+                    {
+                        transmitting_state = st_SEND_PRE_AMBLES;
+                        pre_amble_counter  = 0;
+                        half = half_1; // just in case, ready for the next transmission
+
+                        __bic_SR_register_on_exit( LPM2_bits ); // Exit LPM2
+                        __no_operation();                       // For debugger
+                    }
+                    else
+                    {
+                        transmitting_state = st_SEND_START_BIT;
+                    }
+                }
+                break;
+        }
+
+        if( toggle == 1 )
+        {
+            if( previous == 1 ) // disable PWM
+            {
+                previous = 0;
+                P1SEL0  &= ~BIT5;                    // Makes P1.5 a regular I/O pin (output set to 0)
+                P1DIR   &= ~BIT5;                    // P1.5 input (Note: To avoid 'parasitic' output)
+                TB0CTL   = 0;                        // Stop the timer
+            }
+            else // previous == 0 - enable PWM
+            {
+                previous = 1;
+                P1SEL0  |= BIT5;                     // Timer output selected
+                P1DIR   |= BIT5;                     // P1.5 output
+                TB0CTL   = TBSSEL_2 + MC_1 + TBCLR;  // SMCLK (8MHz), up mode, clear TAR
+            }
+        }
+    }
 }
+
+
 
 /**********************************************************************//**
  * @brief Echo back RXed character, confirm TX buffer is ready first

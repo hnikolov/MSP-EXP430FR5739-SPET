@@ -66,13 +66,13 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 #define T_1200_BAUD 6624
 #define HALF_T_1200_BAUD (T_1200_BAUD / 2)
 // Probably not needed
-#define NOMINAL_HALF_BIT_TIME_ONE_1200_BAUD (     T_1200_BAUD / 2)
+#define NOMINAL_HALF_BIT_TIME_ONE_1200_BAUD (     T_1200_BAUD / 2) // 416 us
 #define NOMINAL_BIT_TIME_ZERO_1200_BAUD     (     T_1200_BAUD    )
 
-#define HALF_BIT_TIME_ONE_1200_BAUD_LO_LIM  (     T_1200_BAUD / 4)
-#define HALF_BIT_TIME_ONE_1200_BAUD_HI_LIM  (3U * T_1200_BAUD / 4)
-#define BIT_TIME_ZERO_1200_BAUD_LO_LIM      (3U * T_1200_BAUD / 4)
-#define BIT_TIME_ZERO_1200_BAUD_HI_LIM      (6U * T_1200_BAUD / 4)
+#define HALF_BIT_TIME_ONE_1200_BAUD_LO_LIM  (     T_1200_BAUD / 4) //  208 us
+#define HALF_BIT_TIME_ONE_1200_BAUD_HI_LIM  (3U * T_1200_BAUD / 4) //  624 us
+#define BIT_TIME_ZERO_1200_BAUD_LO_LIM      (3U * T_1200_BAUD / 4) //  624 us
+#define BIT_TIME_ZERO_1200_BAUD_HI_LIM      (6U * T_1200_BAUD / 4) // 1248 us
 
 //===============================================================
 // Bit time @ baudrate 2400 for 8MHz SMCLK
@@ -117,7 +117,8 @@ static const unsigned char LEDs[] = {BIT7, BIT6, BIT5, BIT4, BIT3, BIT2, BIT1, B
 #define BIT_TIME_ZERO_HI_LIM        (6U * T_BAUD / 4)
 //===============================================================
 
-// 8.3 / millisecond (7.84?) @ ALKC = VLO (10KHz)
+// 8.3 / millisecond (7.84?) @ ALKC = VLO (10KHz), used with OneShotTimer()
+#define MILLISECONDS_12   100
 #define MILLISECONDS_30   249
 #define MILLISECONDS_40   330
 #define MILLISECONDS_500  4150
@@ -143,6 +144,7 @@ volatile char byte_TX;
 volatile static char BPM_Buffer_TX[8] = {0};
 volatile int byte_c; // Byte Counter
 volatile int bit_c;  // Bit  Counter
+volatile int transmit_length; // Byte counter Mode 8
 
 // TODO: Timer capture variables
 volatile unsigned int StartTime, EndTime;
